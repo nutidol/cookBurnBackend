@@ -33,10 +33,10 @@ provider:
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
-plugins:
-  # - serverless-webpack
-  - serverless-offline
-  - serverless-dynamodb-local
+# plugins:
+#   # - serverless-webpack
+#   - serverless-offline
+#   - serverless-dynamodb-local
 
 custom:
   dynamodb:
