@@ -53,6 +53,15 @@ custom:
 
 
 functions:
+  addUser:
+    handler: authenPage/addUser
+    events:
+      - http:
+          path: authenPage
+          method: post
+          cors: true
+    role: arn:aws:iam::790522487667:role/userDB
+
   hello:
     handler: handler.hello
 
@@ -95,6 +104,8 @@ functions:
           path: todos/{id}
           method: delete
           cors: true
+
+
 
 resources:
   Resources:
