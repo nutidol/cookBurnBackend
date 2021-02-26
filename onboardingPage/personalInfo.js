@@ -3,51 +3,45 @@
 const dynamodb = require("../dynamodb");
 
 //get Profile Icon
-// module.exports.getProfileIcon = (event, context, callback) => {
-//   const params = {
-//     TableName: process.env.DYNAMODB_TABLE,
-//     Key: {
-//       id: event.pathParameters.id,
-//     },
-//   };
+  module.exports.getProfileIcon = (event, context, callback) => {
+ 
+    const params = {
+      TableName: process.env.DYNAMODB_TABLE,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
+      ExpressionAttributeValues: {
+        ':pk': 'profile',
+        ':sk': 'pic',
+      },
+    };
 
-//   // fetch todo from the database
-//   dynamodb.get(params, (error, result) => {
-//     // handle potential errors
-//     if (error) {
-//       console.error(error);
-//       callback(null, {
-//         statusCode: error.statusCode || 501,
-//         headers: { 'Content-Type': 'text/plain' },
-//         body: 'Couldn\'t fetch the todo item.',
-//       });
-//       return;
-//     }
+    dynamodb.query(params, (error, result) => {
+      if (error) {
+        console.error(error);
+        callback(null, {
+          statusCode: error.statusCode || 501,
+          headers: { "Content-Type": "application/json" },
+          body: "Couldn't fetch the item.",
+        });
+        return;
+      }
+      // create a response
+      // const headers = {
+      //   "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+      //   "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS
+      // }
+      const response = {
+        // headers,
+        statusCode: 200,
+        body: JSON.stringify(result.Items),
+      };
+      callback(null, response);
+    });
+  };
+  
 
-//     // create a response
-//     const response = {
-//       statusCode: 200,
-//       body: JSON.stringify(result.Item),
-//     };
-//     callback(null, response);
-//   });
-// };
+//post Personal Info
+  module.exports.createPersonalInfo = (event, context, callback) => {
 
-//create personal info
-
-module.exports.createPersonalInfo = (event, context, callback) => {
-  // const data = JSON.parse(event.body);
-  // console.log(data);
-  // if (typeof data.username !== 'string') {
-  //   console.error('Validation Failed');
-  //   callback(null, {
-  //     statusCode: 400,
-  //     headers: { 'Content-Type': 'text/plain' },
-  //     body: 'Couldn\'t create item.',
-  //   });
-  //   console.log(data.username)
-  //   return;
-  // }
   console.log(event.username);
   const params = {
     TableName: process.env.DYNAMODB_TABLE,

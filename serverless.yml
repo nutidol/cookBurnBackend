@@ -62,11 +62,19 @@ functions:
           cors: true
     # role: arn:aws:iam::790522487667:role/userDB
   
+  getProfileIcon:
+    handler: onboardingPage/personalInfo.getProfileIcon
+    events:
+      - http:
+          path: onboardingPage/profileIcon
+          method: get
+          cors: true
+          
   createPersonalInfo:
     handler: onboardingPage/personalInfo.createPersonalInfo
     events:
       - http:
-          path: onboardingPage/createPersonalInfo
+          path: onboardingPage/personalInfo
           method: post
           cors: true
 

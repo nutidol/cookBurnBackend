@@ -19,7 +19,7 @@ module.exports.list = (event, context, callback) => {
       callback(null, {
         statusCode: error.statusCode || 501,
         headers: { "Content-Type": "application/json" },
-        body: "Couldn't fetch the todo item.",
+        body: "Couldn't fetch the item.",
       });
       return;
     }
