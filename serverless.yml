@@ -54,13 +54,29 @@ custom:
 
 functions:
   addUser:
-    handler: authenPage/addUser
+    handler: authenPage/addUser.addUser
     events:
       - http:
-          path: authenPage
+          path: authenPage/addUser
           method: post
           cors: true
-    role: arn:aws:iam::790522487667:role/userDB
+    # role: arn:aws:iam::790522487667:role/userDB
+  
+  createPersonalInfo:
+    handler: onboardingPage/personalInfo.createPersonalInfo
+    events:
+      - http:
+          path: onboardingPage/createPersonalInfo
+          method: post
+          cors: true
+
+  getDailyInfo:
+    handler: homePage/dailyInfo.getDailyInfo
+    events:
+      - http:
+          path: homePage/dailyInfo/{id}
+          method: get
+          cors: true
 
   hello:
     handler: handler.hello

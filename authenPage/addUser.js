@@ -1,39 +1,42 @@
-const ddb = require('../dynamodb');
+const dynamodb = require('../dynamodb');
 
 module.exports.addUser = async (event, context) => {
+// module.exports.addUser = (event, context) => {
+
     console.log(event);
 
-    let date = new Date();
+    // let date = new Date();
 
-    const tableName = process.env.TABLE_NAME;
-    const region = process.env.REGION;
-    const defaultAvi = 'https://YOUR/DEFAULT/IMAGE';
-    
-    console.log("table=" + tableName + " -- region=" + region);
+    const tableName = process.env.DYNAMODB_TABLE;
+    // const region = process.env.REGION;
+    // const defaultAvi = 'https://YOUR/DEFAULT/IMAGE';
+  
+    console.log("table=" + tableName);
+  
+    // console.log("table=" + tableName + " -- region=" + region);
 
-    aws.config.update({region: region});
+    // aws.config.update({region: region});
 
     // If the required parameters are present, proceed
     if (event.request.userAttributes.sub) {
 
         // -- Write data to DDB
-        let ddbParams = {
+        let params = {
+            TableName: tableName,
             Item: {
-                'id': {S: event.request.userAttributes.sub},
-                '__typename': {S: 'User'},
-                'picture': {S: defaultAvi},
-                'username': {S: event.userName},
-                'name': {S: event.request.userAttributes.name},
-                'skillLevel': {N: '0'},
-                'email': {S: event.request.userAttributes.email},
-                'createdAt': {S: date.toISOString()},
-            },
-            TableName: tableName
+                PK : "user_"+event.request.userAttributes.sub,
+                SK : "profile_"+event.userName,
+                email : event.request.userAttributes.email
+            }
         };
+        // dynamodb.putItem(params, function(err, data) {
+        //     if (err) console.log(err, err.stack); // an error occurred
+        //     else     console.log(data);           // successful response
+        // });
 
         // Call DynamoDB
         try {
-            await ddb.putItem(ddbParams).promise()
+            await dynamodb.put(params).promise();
             console.log("Success");
         } catch (err) {
             console.log("Error", err);
