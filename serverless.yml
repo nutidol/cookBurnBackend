@@ -17,7 +17,8 @@ provider:
   #     - subnet-626db92a
   #     - subnet-1bd04242
   environment:
-    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    DYNAMODB_TABLE: testTable
+  # DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -32,7 +33,6 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
-
 # plugins:
 #   # - serverless-webpack
 #   - serverless-offline
@@ -86,67 +86,80 @@ functions:
           method: get
           cors: true
 
+  getSearchIngredient:
+    handler: ingredientsPage/searchIngredient.getSearchIngredient
+    events:
+      - http:
+          path: ingredientsPage/searchIngredient
+          method: get
+          cors: true
+          integration: lambda
+          request:
+            template:
+              application/json: '{ "ingredient" : "$input.params(''ingredient'')" }'
+
+
   hello:
     handler: handler.hello
 
-  create:
-    handler: todos/create.create
-    events:
-      - http:
-          path: todos
-          method: post
-          cors: true
+  # create:
+  #   handler: todos/create.create
+  #   events:
+  #     - http:
+  #         path: todos
+  #         method: post
+  #         cors: true
 
-  list:
-    handler: todos/list.list
-    events:
-      - http:
-          path: todos
-          method: get
-          cors: true
+  # list:
+  #   handler: todos/list.list
+  #   events:
+  #     - http:
+  #         path: todos
+  #         method: get
+  #         cors: true
 
-  get:
-    handler: todos/get.get
-    events:
-      - http:
-          path: todos/{id}
-          method: get
-          cors: true
+  # get:
+  #   handler: todos/get.get
+  #   events:
+  #     - http:
+  #         path: todos/{id}
+  #         method: get
+  #         cors: true
 
-  update:
-    handler: todos/update.update
-    events:
-      - http:
-          path: todos/{id}
-          method: put
-          cors: true
+  # update:
+  #   handler: todos/update.update
+  #   events:
+  #     - http:
+  #         path: todos/{id}
+  #         method: put
+  #         cors: true
 
-  delete:
-    handler: todos/delete.delete
-    events:
-      - http:
-          path: todos/{id}
-          method: delete
-          cors: true
-
-
-
-resources:
-  Resources:
-    TodosDynamoDbTable:
-      Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Retain
-      Properties:
-        AttributeDefinitions:
-          -
-            AttributeName: id
-            AttributeType: S
-        KeySchema:
-          -
-            AttributeName: id
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+  # delete:
+    # handler: todos/delete.delete
+    # events:
+    #   - http:
+    #       path: todos/{id}
+    #       method: delete
+    #       cors: true
 
 
 
+# resources:
+#   Resources:
+#     dynamoDbTable:
+#       Type: 'AWS::DynamoDB::Table'
+#       DeletionPolicy: Retain
+#       Properties:
+#         # TableName: ${self:provider.environment.DYNAMODB_TABLE}
+#         TableName: 'testTable'
+#         AttributeDefinitions:
+#           - AttributeName: "PK"
+#             AttributeType: "S"
+#           - AttributeName: "SK"
+#             AttributeType: "S"        
+#         KeySchema:
+#           - AttributeName: PK
+#             KeyType: HASH
+#           - AttributeName: SK
+#             KeyType: RANGE
+#         BillingMode: PAY_PER_REQUEST

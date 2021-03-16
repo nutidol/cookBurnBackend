@@ -3,6 +3,8 @@
 const dynamodb = require("../dynamodb");
 
 //getDailyInfo
+//daily info based on user's information
+//update everytime when user make change on their information
 module.exports.getDailyInfo = (event, context, callback) => {
  
   const params = {
@@ -38,5 +40,8 @@ module.exports.getDailyInfo = (event, context, callback) => {
   });
 };
 
+//
 
 
+//getUpdateDailyInfo
+//daily intake -- based on user's cooked history
