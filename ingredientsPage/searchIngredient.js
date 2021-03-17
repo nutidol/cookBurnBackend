@@ -1,8 +1,6 @@
 "use strict";
 
-const dynamodb = require("../dynamodb");
-const fetch = require('node-fetch');
-
+const fetch = require("node-fetch");
 
 //searchIngredient
 //user pass queryparameter(just want to try this, actually pass pathparameter is easier)
@@ -18,24 +16,43 @@ const fetch = require('node-fetch');
 //    "name":"pork",
 //    "pic":"http://...",
 //    "ingredientType":"meat", --> ????????????????????????????????????????????
-//    "unit":"g, kg, pieces" 
+//    "unit":"g, kg, pieces"
 // }
 
-module.exports.getSearchIngredient = (event, context, callback) => {
-    let ingredient = event.ingredient;
-    console.log(ingredient);
-    let search_url = `https://api.spoonacular.com/food/ingredients/search?apiKey=e6b34e7165a042a49a19811bc0057118&query=${ingredient}`
-    console.log(search_url);
+module.exports.getSearchIngredient = async (event, context) => {
+  let ingredient = event.ingredient;
+  let search_url = `https://api.spoonacular.com/food/ingredients/search?apiKey=e6b34e7165a042a49a19811bc0057118&number=1&query=${ingredient}`;
+  let json = await getIngredientInfo(search_url);
+  let ingredientID = json.results[0].id;
+  let ingredientName = json.results[0].name;
+  let image = json.results[0].image;
+  let image_url = `https://spoonacular.com/cdn/ingredients_100x100/${image}`;
+  let search_unit = `https://api.spoonacular.com/food/ingredients/${ingredientID}/information?apiKey=e6b34e7165a042a49a19811bc0057118`;
+  let json2 = await getIngredientInfo(search_unit);
+  let unit = json2.possibleUnits;
+  console.log(unit);
 
-    const headers = {
-      "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-      "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS
-    }
-    const response = {
-        headers,
-        statusCode: 200,
-        body: JSON.stringify(ingredient),
-      };
+  const headers = {
+    "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+    "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+  };
 
-    callback(null, response);
+  const response = {
+    ingredientID: ingredientID,
+    name: ingredientName,
+    pic: image_url,
+    unit: unit,
+  };
+
+  return {
+    headers,
+    statusCode: 200,
+    body: JSON.stringify(response),
+  };
 };
+
+async function getIngredientInfo(search_url) {
+  let res = await fetch(search_url);
+  let json = await res.json();
+  return json;
+}
