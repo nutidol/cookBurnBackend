@@ -2,79 +2,86 @@
 
 const dynamodb = require("../dynamodb");
 
+//DONE
 //get Profile Icon
-  module.exports.getProfileIcon = (event, context, callback) => {
- 
-    const params = {
-      TableName: process.env.DYNAMODB_TABLE,
-      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-      ExpressionAttributeValues: {
-        ':pk': 'profile',
-        ':sk': 'pic',
-      },
-    };
-
-    dynamodb.query(params, (error, result) => {
-      if (error) {
-        console.error(error);
-        callback(null, {
-          statusCode: error.statusCode || 501,
-          headers: { "Content-Type": "application/json" },
-          body: "Couldn't fetch the item.",
-        });
-        return;
-      }
-      // create a response
-      // const headers = {
-      //   "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-      //   "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS
-      // }
-      const response = {
-        // headers,
-        statusCode: 200,
-        body: JSON.stringify(result.Items),
-      };
-      callback(null, response);
-    });
+module.exports.getProfileIcon = (event, context, callback) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+    ExpressionAttributeValues: {
+      ":pk": "profile",
+      ":sk": "pic",
+    },
   };
-  
+
+  dynamodb.query(params, (error, result) => {
+    if (error) {
+      console.error(error);
+      callback(null, {
+        statusCode: error.statusCode || 501,
+        headers: { "Content-Type": "application/json" },
+        body: "Couldn't fetch the item.",
+      });
+      return;
+    }
+    // create a response
+    // const headers = {
+    //   "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+    //   "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS
+    // }
+    const response = {
+      // headers,
+      statusCode: 200,
+      body: JSON.stringify(result.Items),
+    };
+    callback(null, response);
+  });
+};
 
 //post Personal Info
-//   module.exports.createPersonalInfo = (event, context, callback) => {
+// how to update personal info?
 
-//   console.log(event.username);
-//   const params = {
-//     TableName: process.env.DYNAMODB_TABLE,
-//     Item: {
-//       'id': event.userID,
-//       'username': event.username,
-//       'profileOf': event.profileOf,
-//       'gender': event.gender,
-//       'age': event.age,
-//       'weight': event.weight,
-//       'height': event.height,
-//       'pic': event.pic,
-//     },
-//   };
+module.exports.createPersonalInfo = (event, context, callback) => {
+  const tableName = process.env.DYNAMODB_TABLE;
+  const data = JSON.parse(event.body);
+  const userID = data.userID;
+  const profileName = data.profileOf;
+  const gender = data.gender;
+  const age = data.age;
+  const weight = data.weight;
+  const height = data.height;
+  const url = data.url;
 
-//   // write the todo to the database
-//   dynamodb.put(params, (error) => {
-//     // handle potential errors
-//     if (error) {
-//       console.error(error);
-//       callback(null, {
-//         statusCode: error.statusCode || 501,
-//         // headers: { 'Content-Type': 'text/plain' },
-//         body: "Couldn't create item.",
-//       });
-//       return;
-//     }
+  const params = {
+    TableName: tableName,
+    Item: {
+      PK: `user_${userID}`,
+      SK: `profile_${profileName}`,
+      gender: gender,
+      age: age,
+      weight: weight,
+      height: height,
+      url: url,
+    },
+  };
 
-//     // create a response
-//     const response = {
-//       statusCode: 200,
-//       body: JSON.stringify(params.Item),
-//     };
-//     callback(null, response);
-//   });
-// };
+  dynamodb.put(params, (error) => {
+    if (error) {
+      console.error(error);
+      callback(null, {
+        statusCode: error.statusCode || 501,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: "Could not create the personal information item.",
+      });
+      return;
+    }
+    const response = {
+      statusCode: 200,
+      body: JSON.stringify(params.Item),
+    };
+
+    callback(null, response);
+  });
+};
