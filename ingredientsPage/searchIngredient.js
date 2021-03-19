@@ -19,7 +19,7 @@ const fetch = require("node-fetch");
 //    "unit":"g, kg, pieces"
 // }
 
-module.exports.getSearchIngredient = async (event, context) => {
+module.exports.getSearchIngredient = async (event) => {
   let ingredient = event.ingredient;
   let search_url = `https://api.spoonacular.com/food/ingredients/search?apiKey=e6b34e7165a042a49a19811bc0057118&number=1&query=${ingredient}`;
   let json = await getIngredientInfo(search_url);

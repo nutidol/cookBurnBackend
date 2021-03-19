@@ -2,7 +2,6 @@
 
 const dynamodb = require("../dynamodb");
 
-//DONE
 //get Profile Icon
 module.exports.getProfileIcon = (event, context, callback) => {
   const params = {

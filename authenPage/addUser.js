@@ -16,7 +16,8 @@ module.exports.addUser = async (event, context) => {
             TableName: tableName,
             Item: {
                 PK : "user_"+event.request.userAttributes.sub,
-                SK : "profile_"+event.userName,
+                SK : "authen_"+event.request.userAttributes.sub,
+                username: event.userName,
                 email : event.request.userAttributes.email
             }
         };

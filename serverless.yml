@@ -78,6 +78,15 @@ functions:
           method: post
           cors: true
 
+  getMenuCuisine:
+    handler: onboardingPage/cuisineOfMenu.getMenuCuisine
+    events:
+      - http:
+          path: onboardingPage/cuisineOfMenus
+          method: get
+          cors: true
+
+
   getDailyInfo:
     handler: homePage/dailyInfo.getDailyInfo
     events:
@@ -85,6 +94,7 @@ functions:
           path: homePage/dailyInfo/{id}
           method: get
           cors: true
+
 
   getSearchIngredient:
     handler: ingredientsPage/searchIngredient.getSearchIngredient
