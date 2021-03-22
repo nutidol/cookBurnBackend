@@ -1,5 +1,5 @@
 "use strict";
-
+const dynamodb = require("../dynamodb");
 const fetch = require("node-fetch");
 
 //searchIngredient
@@ -40,15 +40,11 @@ module.exports.getSearchIngredient = async (event) => {
   const result = {
     ingredientID: ingredientID,
     name: ingredientName,
-    pic: image_url,
+    url: image_url,
     unit: unit,
   };
 
-  return {
-    // headers,
-    // statusCode: 200,
-    result: result
-  };
+  return result;
 };
 
 async function getIngredientInfo(search_url) {
@@ -56,3 +52,40 @@ async function getIngredientInfo(search_url) {
   let json = await res.json();
   return json;
 }
+
+///getIngredientLists
+//require path parameter as an ingredientType
+///ingredientLists
+module.exports.getIngredientList = (event, context, callback) => {
+  const ingredientType = event.pathParameters.type;
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+    ExpressionAttributeValues: {
+      ":pk": "ingredient",
+      ":sk": `${ingredientType}`,
+    },
+  };
+
+  dynamodb.query(params, (error, result) => {
+    if (error) {
+      console.error(error);
+      callback(null, {
+        statusCode: error.statusCode || 501,
+        headers: { "Content-Type": "application/json" },
+        body: "Couldn't fetch the item.",
+      });
+      return;
+    }
+
+    const response = {
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+      },
+      statusCode: 200,
+      body: JSON.stringify(result.Items),
+    };
+    callback(null, response);
+  });
+};

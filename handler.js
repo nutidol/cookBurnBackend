@@ -17,7 +17,6 @@ module.exports.hello = async (event) => {
   const sweet =  `{"sweetness": {"N": "${sweetness}"}, \n"saltiness": {"N": "${saltiness}"}, \n "sourness":{"N": "${sourness}"}, \n"bitterness": {"N": "${bitterness}"}, \n"savoriness": {"N": "${savoriness}"}, \n "fattiness":{"N": "${fattiness}"}, \n "spiciness":{"N": "${spiciness}"}}`
 
 
-
   return {
     statusCode: 200,
     body: sweet

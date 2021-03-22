@@ -130,6 +130,15 @@ functions:
             template:
               application/json: '{ "ingredient" : "$input.params(''ingredient'')" }'
 
+  getIngredientList:
+    handler: ingredientsPage/searchIngredient.getIngredientList
+    events:
+      - http:
+          path: ingredientsPage/ingredientLists/{type}
+          method: get
+          cors: true
+
+
   hello:
     handler: handler.hello
     events:
