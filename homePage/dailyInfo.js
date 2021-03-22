@@ -48,11 +48,6 @@ module.exports.getDailyInfo = async (event) => {
   let sugar = parseInt(energy * 0.1 * 0.25);
   let fiber = parseInt((energy * 14) / 1000);
 
-  const headers = {
-    "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-    "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
-  };
-
   const tableName = process.env.DYNAMODB_TABLE;
 
   if (userID) {
@@ -81,7 +76,10 @@ module.exports.getDailyInfo = async (event) => {
 
     console.log("Success: Everything executed correctly");
     return {
-      headers,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+      },
       statusCode: 200,
       body: JSON.stringify(params.Item),
     };
@@ -113,81 +111,3 @@ const getUserProfile = async (userID, userName) => {
   const result = await dynamodb.get(params).promise();
   return result.Item;
 };
-
-// module.exports.getDailyInfo = (event) => {
-
-//   const params = {
-//     TableName: process.env.DYNAMODB_TABLE,
-//     KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-//     ExpressionAttributeValues: {
-//       ':pk': 'user_'+ event.pathParameters.id,
-//       ':sk': 'daily',
-//     },
-//   };
-
-//   dynamodb.query(params, (error, result) => {
-//     if (error) {
-//       console.error(error);
-//       callback(null, {
-//         statusCode: error.statusCode || 501,
-//         headers: { "Content-Type": "application/json" },
-//         body: "Couldn't fetch the item.",
-//       });
-//       return;
-//     }
-
-//     // create a response
-//     const headers = {
-//       "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-//       "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS
-//     }
-//     const response = {
-//       headers,
-//       statusCode: 200,
-//       body: JSON.stringify(result.Items),
-//     };
-
-//   });
-// };
-
-//getUpdateDailyInfo
-//daily intake -- based on user's cooked history
-// that has to be calculate after each cooked update...
-// the one before slash sign
-
-// calculate the percentage of each duay? --> for better ui, easy to catch up
-
-// module.exports.getUpdateDailyInfo = (event, context, callback) => {
-
-//   const params = {
-//     TableName: process.env.DYNAMODB_TABLE,
-//     KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
-//     ExpressionAttributeValues: {
-//       ':pk': 'user_'+ event.pathParameters.id,
-//       ':sk': 'daily',
-//     },
-//   };
-
-//   dynamodb.query(params, (error, result) => {
-//     if (error) {
-//       console.error(error);
-//       callback(null, {
-//         statusCode: error.statusCode || 501,
-//         headers: { "Content-Type": "application/json" },
-//         body: "Couldn't fetch the item.",
-//       });
-//       return;
-//     }
-//     // create a response
-//     const headers = {
-//       "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-//       "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS
-//     }
-//     const response = {
-//       headers,
-//       statusCode: 200,
-//       body: JSON.stringify(result.Items),
-//     };
-//     callback(null, response);
-//   });
-// };

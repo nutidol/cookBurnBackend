@@ -1,4 +1,3 @@
-//get
 const dynamodb = require("../dynamodb");
 
 module.exports.getMenuCuisine = (event, context, callback) => {
@@ -21,12 +20,12 @@ module.exports.getMenuCuisine = (event, context, callback) => {
       });
       return;
     }
-    // const headers = {
-    //   "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-    //   "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS
-    // }
+
     const response = {
-    //   headers,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+      },
       statusCode: 200,
       body: JSON.stringify(result.Items),
     };

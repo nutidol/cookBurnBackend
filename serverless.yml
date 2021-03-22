@@ -1,6 +1,6 @@
 ---
 service: serverless-backend
-frameworkVersion: '2'
+frameworkVersion: "2"
 
 provider:
   name: aws
@@ -22,10 +22,10 @@ provider:
   iamRoleStatements:
     - Effect: Allow
       Action:
-      #   - dynamodb:*
-      #   - s3:*
-      #   - ses:*
-      # Resource: '*'
+        #   - dynamodb:*
+        #   - s3:*
+        #   - ses:*
+        # Resource: '*'
         - dynamodb:Query
         - dynamodb:Scan
         - dynamodb:GetItem
@@ -46,11 +46,10 @@ custom:
       port: 8000
       inMemory: true
       migrate: true
-    # Comment if you don't have a DynamoDB running locally
+      # Comment if you don't have a DynamoDB running locally
       noStart: true
     migration:
       dir: offline/migrations
-
 
 functions:
   addUser:
@@ -61,7 +60,7 @@ functions:
           method: post
           cors: true
     # role: arn:aws:iam::790522487667:role/userDB
-  
+
   getProfileIcon:
     handler: onboardingPage/personalInfo.getProfileIcon
     events:
@@ -69,7 +68,7 @@ functions:
           path: onboardingPage/profileIcon
           method: get
           cors: true
-          
+
   createPersonalInfo:
     handler: onboardingPage/personalInfo.createPersonalInfo
     events:
@@ -86,6 +85,22 @@ functions:
           method: get
           cors: true
 
+  getMenuTaste:
+    handler: onboardingPage/tasteOfMenu.getMenuTaste
+    events:
+      - http:
+          path: onboardingPage/tasteOfMenu
+          method: get
+          cors: true
+
+  postMenuTaste:
+    handler: onboardingPage/tasteOfMenu.postMenuTaste
+    events:
+      - http:
+          path: onboardingPage/tasteOfMenu
+          method: post
+          cors: true
+
 
   getDailyInfo:
     handler: homePage/dailyInfo.getDailyInfo
@@ -94,7 +109,6 @@ functions:
           path: homePage/dailyInfo/{id}
           method: get
           cors: true
-
 
   getSearchIngredient:
     handler: ingredientsPage/searchIngredient.getSearchIngredient
@@ -108,9 +122,13 @@ functions:
             template:
               application/json: '{ "ingredient" : "$input.params(''ingredient'')" }'
 
-
   hello:
     handler: handler.hello
+    events:
+      - http:
+          path: handlerMap
+          method: post
+          cors: true
 
   # create:
   #   handler: todos/create.create
@@ -145,15 +163,12 @@ functions:
   #         cors: true
 
   # delete:
-    # handler: todos/delete.delete
-    # events:
-    #   - http:
-    #       path: todos/{id}
-    #       method: delete
-    #       cors: true
-
-
-
+  # handler: todos/delete.delete
+  # events:
+  #   - http:
+  #       path: todos/{id}
+  #       method: delete
+  #       cors: true
 # resources:
 #   Resources:
 #     dynamoDbTable:
@@ -166,7 +181,7 @@ functions:
 #           - AttributeName: "PK"
 #             AttributeType: "S"
 #           - AttributeName: "SK"
-#             AttributeType: "S"        
+#             AttributeType: "S"
 #         KeySchema:
 #           - AttributeName: PK
 #             KeyType: HASH

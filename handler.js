@@ -1,18 +1,25 @@
-'use strict';
+'use strict'
+
+
 
 module.exports.hello = async (event) => {
+  const data = JSON.parse(event.body);
+
+  const sweetness = data.sweetness;
+  const sw = sweetness.toString();
+  const saltiness = data.saltiness;
+  const sourness = data.sourness;
+  const bitterness = data.bitterness;
+  const savoriness = data.savoriness;
+  const fattiness = data.fattiness;
+  const spiciness = data.spiciness;
+
+  const sweet =  `{"sweetness": {"N": "${sweetness}"}, \n"saltiness": {"N": "${saltiness}"}, \n "sourness":{"N": "${sourness}"}, \n"bitterness": {"N": "${bitterness}"}, \n"savoriness": {"N": "${savoriness}"}, \n "fattiness":{"N": "${fattiness}"}, \n "spiciness":{"N": "${spiciness}"}}`
+
+
+
   return {
     statusCode: 200,
-    body: JSON.stringify(
-      {
-        message: 'Go Serverless v1.0! Your function executed successfully!',
-        input: event,
-      },
-      null,
-      2
-    ),
+    body: sweet
   };
-
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // return { message: 'Go Serverless v1.0! Your function executed successfully!', event };
 };

@@ -32,12 +32,12 @@ module.exports.getSearchIngredient = async (event) => {
   let unit = json2.possibleUnits;
   console.log(unit);
 
-  const headers = {
-    "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-    "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
-  };
+  // const headers = {
+  //   "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+  //   "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+  // };
 
-  const response = {
+  const result = {
     ingredientID: ingredientID,
     name: ingredientName,
     pic: image_url,
@@ -45,9 +45,9 @@ module.exports.getSearchIngredient = async (event) => {
   };
 
   return {
-    headers,
-    statusCode: 200,
-    body: JSON.stringify(response),
+    // headers,
+    // statusCode: 200,
+    result: result
   };
 };
 

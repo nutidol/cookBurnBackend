@@ -23,13 +23,12 @@ module.exports.getProfileIcon = (event, context, callback) => {
       });
       return;
     }
-    // create a response
-    // const headers = {
-    //   "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-    //   "Access-Control-Allow-Credentials": true // Required for cookies, authorization headers with HTTPS
-    // }
+
     const response = {
-      // headers,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+      },
       statusCode: 200,
       body: JSON.stringify(result.Items),
     };
@@ -39,7 +38,6 @@ module.exports.getProfileIcon = (event, context, callback) => {
 
 //post Personal Info
 // how to update personal info?
-
 module.exports.createPersonalInfo = (event, context, callback) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
