@@ -49,37 +49,6 @@ module.exports.getMenuTaste = (event, context, callback) => {
 
 //recieve event as [] and need to looping through 0,1,2,3,... until get all data of each menu that user has selected
 //calculate within the loop to get the final taste of that user
-
-// "userID": 123,
-// "MenuTaste": [
-//   {"tastelevel": {
-// "fattiness": 100,
-// "spiciness": 0,
-// "saltiness": 0.21,
-// "bitterness": 0,
-// "savoriness": 0,
-// "sweetness": 24.66,
-// "sourness": 0
-// },
-// "SK": "taste_644387",
-// "PK": "menu",
-// "url": "https://spoonacular.com/recipeImages/644387-312x231.jpg",
-// "title": "Garlicky Kale",},
-//   {"tastelevel": {
-// "fattiness": 100,
-// "spiciness": 0,
-// "saltiness": 0.21,
-// "bitterness": 0,
-// "savoriness": 0,
-// "sweetness": 24.66,
-// "sourness": 0
-// },
-// "SK": "taste_644387",
-// "PK": "menu",
-// "url": "https://spoonacular.com/recipeImages/644387-312x231.jpg",
-// "title": "Garlicky Kale"}
-// ]
-
 // return as what will be in database
 
 module.exports.postMenuTaste = async (event) => {
@@ -106,13 +75,13 @@ module.exports.postMenuTaste = async (event) => {
     sumsour += menuTaste[i].tastelevel.sourness;
   }
 
-  const fatAvg = sumfat / menuTaste.length;
-  const spicyAvg = sumspicy / menuTaste.length;
-  const saltyAvg = sumsalty / menuTaste.length;
-  const bitterAvg = sumbitter / menuTaste.length;
-  const savoryAvg = sumsavory / menuTaste.length;
-  const sweetAvg = sumsweet / menuTaste.length;
-  const sourAvg = sumsour / menuTaste.length;
+  const fatAvg = parseInt(sumfat / menuTaste.length);
+  const spicyAvg = parseInt(sumspicy / menuTaste.length);
+  const saltyAvg = parseInt(sumsalty / menuTaste.length);
+  const bitterAvg = parseInt(sumbitter / menuTaste.length);
+  const savoryAvg = parseInt(sumsavory / menuTaste.length);
+  const sweetAvg = parseInt(sumsweet / menuTaste.length);
+  const sourAvg = parseInt(sumsour / menuTaste.length);
 
   let params = {
     TableName: tableName,
