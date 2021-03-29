@@ -15,7 +15,11 @@ module.exports.getMenuCuisine = (event, context, callback) => {
       console.error(error);
       callback(null, {
         statusCode: error.statusCode || 501,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+          "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+        },
         body: "Couldn't fetch the item.",
       });
       return;
@@ -33,17 +37,19 @@ module.exports.getMenuCuisine = (event, context, callback) => {
   });
 };
 
-//post
-
 module.exports.postMenuCuisine = async (event) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
   const userID = data.userID;
   const profileName = data.profileOf;
   const menuCuisine = data.menuCuisine;
+  // const userID = event.userID;
+  // const profileName = event.profileOf;
+  // const menuCuisine = event.menuCuisine;
   let countThai = 0;
   let countNotThai = 0;
   let cuisineType = "thai";
+  let status = 200;
 
   for (let i = 0; i < menuCuisine.length; i++) {
     if (menuCuisine[i].type == "Thai") {
@@ -79,6 +85,7 @@ module.exports.postMenuCuisine = async (event) => {
     console.log("Success");
   } catch (err) {
     console.log("Error", err);
+    statusCode = 404;
   }
 
   console.log("Success: Everything executed correctly");
@@ -87,7 +94,8 @@ module.exports.postMenuCuisine = async (event) => {
       "Access-Control-Allow-Origin": "*", // Required for CORS support to work
       "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
     },
-    statusCode: 200,
+    statusCode: status,
     body: JSON.stringify(params.Item),
   };
+  // return params.Item;
 };

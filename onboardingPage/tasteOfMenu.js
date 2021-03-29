@@ -15,7 +15,11 @@ module.exports.getMenuTaste = (event, context, callback) => {
       console.error(error);
       callback(null, {
         statusCode: error.statusCode || 501,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+          "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+        },
         body: "Couldn't fetch the item.",
       });
       return;
@@ -109,6 +113,7 @@ module.exports.postMenuTaste = async (event) => {
   console.log("Success: Everything executed correctly");
   return {
     headers: {
+      "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*", // Required for CORS support to work
       "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
     },

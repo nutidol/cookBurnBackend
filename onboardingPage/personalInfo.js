@@ -18,7 +18,11 @@ module.exports.getProfileIcon = (event, context, callback) => {
       console.error(error);
       callback(null, {
         statusCode: error.statusCode || 501,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+          "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+        },
         body: "Couldn't fetch the item.",
       });
       return;
@@ -69,12 +73,19 @@ module.exports.createPersonalInfo = (event, context, callback) => {
         statusCode: error.statusCode || 501,
         headers: {
           "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+          "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
         },
         body: "Could not create the personal information item.",
       });
       return;
     }
     const response = {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+      },
       statusCode: 200,
       body: JSON.stringify(params.Item),
     };

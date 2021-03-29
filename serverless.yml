@@ -52,6 +52,8 @@ custom:
       dir: offline/migrations
 
 functions:
+
+# AUTHEN PAGE
   addUser:
     handler: authenPage/addUser.addUser
     events:
@@ -61,6 +63,7 @@ functions:
           cors: true
     # role: arn:aws:iam::790522487667:role/userDB
 
+# ONBOARDING PAGE
   getProfileIcon:
     handler: onboardingPage/personalInfo.getProfileIcon
     events:
@@ -81,7 +84,7 @@ functions:
     handler: onboardingPage/cuisineOfMenu.getMenuCuisine
     events:
       - http:
-          path: onboardingPage/cuisineOfMenus
+          path: onboardingPage/cuisineOfMenu
           method: get
           cors: true
 
@@ -109,7 +112,7 @@ functions:
           method: post
           cors: true
 
-
+# HOME PAGE
   getDailyInfo:
     handler: homePage/dailyInfo.getDailyInfo
     events:
@@ -117,7 +120,7 @@ functions:
           path: homePage/dailyInfo/{id}
           method: get
           cors: true
-
+# INGREDIENT PAGE
   getSearchIngredient:
     handler: ingredientsPage/searchIngredient.getSearchIngredient
     events:
@@ -138,7 +141,36 @@ functions:
           method: get
           cors: true
 
+  postYourIngredients:
+    handler: ingredientsPage/yourIngredients.postYourIngredients
+    events:
+      - http:
+          path: ingredientsPage/yourIngredients
+          method: post
+          cors: true
+          
+  getYourIngredients:
+    handler: ingredientsPage/yourIngredients.getYourIngredients
+    events:
+      - http:
+          path: ingredientsPage/yourIngredients/{id}
+          method: get
+          cors: true
+          
+# MENU PAGE
+  getMenuFilterFor:
+    handler: menuPage/menuFilterFor.getMenuFilterFor
+    events:
+      - http:
+          path: menuPage/menuFilterFor/{id}
+          method: get
+          cors: true
 
+
+# WORKOUT PAGE
+
+
+# SETTING PAGE
   hello:
     handler: handler.hello
     events:
