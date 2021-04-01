@@ -166,11 +166,73 @@ functions:
           method: get
           cors: true
 
+  genMenu:
+    handler: menuPage/menuFilter.genMenu
+    events:
+      - http:
+          path: menuPage/menuFilter
+          method: post
+          cors: true
+
+
 
 # WORKOUT PAGE
 
 
 # SETTING PAGE
+  getUserFullInfo:
+    handler: settingPage/editProfile.getUserFullInfo
+    events:
+      - http:
+          path: settingPage/userProfile/{id}
+          method: get
+          cors: true
+
+  getOtherProfiles:
+    handler: settingPage/addOtherProfiles.getOtherProfiles
+    events:
+      - http:
+          path: settingPage/getOtherProfiles/{id}
+          method: get
+          cors: true
+
+  createOrUpdateOthersInfo:
+    handler: settingPage/addOtherProfiles.createOrUpdateOthersInfo
+    events:
+      - http:
+          path: settingPage/otherProfile
+          method: post
+          cors: true
+  
+  postOthersMenuTaste:
+    handler: settingPage/addOtherProfiles.postOthersMenuTaste
+    events:
+      - http:
+          path: settingPage/othersTasteOfMenus
+          method: post
+          cors: true
+
+  postOthersMenuCuisine:
+    handler: settingPage/addOtherProfiles.postOthersMenuCuisine
+    events:
+      - http:
+          path: settingPage/othersCuisineOfMenus
+          method: post
+          cors: true
+
+  getOthersFullInfo:
+    handler: settingPage/addOtherProfiles.getOthersFullInfo
+    events:
+      - http:
+          path: settingPage/othersProfileDetails/{id}/{profileOf}
+          method: get
+          cors: true          
+
+
+
+
+
+
   hello:
     handler: handler.hello
     events:

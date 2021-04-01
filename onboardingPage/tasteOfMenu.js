@@ -59,7 +59,7 @@ module.exports.postMenuTaste = async (event) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
   const userID = data.userID;
-  const profileName = data.profileOf;
+  const profileName = await getUserName(userID);
   const menuTaste = data.menuTaste;
   let sumfat = 0;
   let sumspicy = 0;
@@ -120,4 +120,16 @@ module.exports.postMenuTaste = async (event) => {
     statusCode: 200,
     body: JSON.stringify(params.Item),
   };
+};
+
+const getUserName = async (userID) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    Key: {
+      PK: `user_${userID}`,
+      SK: `authen_${userID}`,
+    },
+  };
+  const result = await dynamodb.get(params).promise();
+  return result.Item.username;
 };

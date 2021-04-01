@@ -41,7 +41,7 @@ module.exports.postMenuCuisine = async (event) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
   const userID = data.userID;
-  const profileName = data.profileOf;
+  const profileName = await getUserName(userID);
   const menuCuisine = data.menuCuisine;
   // const userID = event.userID;
   // const profileName = event.profileOf;
@@ -98,4 +98,16 @@ module.exports.postMenuCuisine = async (event) => {
     body: JSON.stringify(params.Item),
   };
   // return params.Item;
+};
+
+const getUserName = async (userID) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    Key: {
+      PK: `user_${userID}`,
+      SK: `authen_${userID}`,
+    },
+  };
+  const result = await dynamodb.get(params).promise();
+  return result.Item.username;
 };

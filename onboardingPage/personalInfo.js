@@ -42,11 +42,11 @@ module.exports.getProfileIcon = (event, context, callback) => {
 
 //post Personal Info
 // how to update personal info?
-module.exports.createPersonalInfo = (event, context, callback) => {
+module.exports.createPersonalInfo = async (event, context, callback) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
   const userID = data.userID;
-  const profileName = data.profileOf;
+  const profileName = await getUserName(userID);
   const gender = data.gender;
   const age = data.age;
   const weight = data.weight;
@@ -66,30 +66,35 @@ module.exports.createPersonalInfo = (event, context, callback) => {
     },
   };
 
-  dynamodb.put(params, (error) => {
-    if (error) {
-      console.error(error);
-      callback(null, {
-        statusCode: error.statusCode || 501,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-          "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
-        },
-        body: "Could not create the personal information item.",
-      });
-      return;
-    }
-    const response = {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
-      },
-      statusCode: 200,
-      body: JSON.stringify(params.Item),
-    };
+  try {
+    await dynamodb.put(params).promise();
+    console.log("Success");
+  } catch (err) {
+    console.log("Error", err);
+    statusCode = 404;
+  }
 
-    callback(null, response);
-  });
+  const response = {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+      "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+    },
+    statusCode: 200,
+    body: JSON.stringify(params.Item),
+  };
+
+  return response;
+};
+
+const getUserName = async (userID) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    Key: {
+      PK: `user_${userID}`,
+      SK: `authen_${userID}`,
+    },
+  };
+  const result = await dynamodb.get(params).promise();
+  return result.Item.username;
 };

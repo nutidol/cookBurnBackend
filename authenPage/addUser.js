@@ -1,5 +1,7 @@
 const dynamodb = require('../dynamodb');
 
+//only new user is allow to add to database ... --> check whether email already exist in database or not
+
 module.exports.addUser = async (event, context) => {
 
     console.log(event);

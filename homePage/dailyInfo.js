@@ -66,6 +66,9 @@ module.exports.getDailyInfo = async (event) => {
       },
     };
 
+    let dataArr = [];
+    dataArr.push(params.Item);
+
     // Call DynamoDB
     try {
       await dynamodb.put(params).promise();
@@ -77,11 +80,12 @@ module.exports.getDailyInfo = async (event) => {
     console.log("Success: Everything executed correctly");
     return {
       headers: {
+        "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*", // Required for CORS support to work
         "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
       },
       statusCode: 200,
-      body: JSON.stringify(params.Item),
+      body: JSON.stringify(dataArr),
     };
   } else {
     console.log("Error: Nothing was written to DDB or SQS");
