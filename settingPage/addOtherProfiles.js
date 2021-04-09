@@ -58,7 +58,7 @@ const getOthers = async (userID, userName) => {
   return resArr;
 };
 
-module.exports.createOrUpdateOthersInfo = (event, context, callback) => {
+module.exports.createOrUpdateOthersInfo = async (event) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
   const userID = data.userID;
@@ -69,7 +69,7 @@ module.exports.createOrUpdateOthersInfo = (event, context, callback) => {
   const height = data.height;
   const url = data.url;
 
-  const params = {
+  let params = {
     TableName: tableName,
     Item: {
       PK: `user_${userID}`,
@@ -82,32 +82,76 @@ module.exports.createOrUpdateOthersInfo = (event, context, callback) => {
     },
   };
 
-  dynamodb.put(params, (error) => {
-    if (error) {
-      console.error(error);
-      callback(null, {
-        statusCode: error.statusCode || 501,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-          "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
-        },
-        body: "Could not create the personal information item.",
-      });
-      return;
-    }
-    const response = {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
-        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
-      },
-      statusCode: 200,
-      body: JSON.stringify(params.Item),
-    };
+  let energy = 0;
+  let sodium = 0;
 
-    callback(null, response);
-  });
+  if (gender == "male" || gender == "men") {
+    energy = parseInt(1.2 * (66.5 + 13.8 * weight + 5.0 * height - 6.8 * age));
+  } else {
+    energy = parseInt(1.2 * (655.1 + 9.6 * weight + 1.9 * height - 4.7 * age));
+  }
+
+  if (age <= 3) {
+    sodium = 1000;
+  } else if (age > 3 && age <= 8) {
+    sodium = 1200;
+  } else if (age > 8 && age <= 50) {
+    sodium = 1500;
+  } else if (age > 50 && age <= 70) {
+    sodium = 1300;
+  } else {
+    sodium = 1200;
+  }
+
+  let fat = parseInt((energy * 0.3) / 9);
+  let carb = parseInt(energy * 0.6);
+  let protein = parseInt(weight);
+  let sugar = parseInt(energy * 0.1 * 0.25);
+  let fiber = parseInt((energy * 14) / 1000);
+
+  let params1 = {
+    TableName: tableName,
+    Item: {
+      PK: "user_" + userID,
+      SK: "daily_" + profileName,
+      energy: energy,
+      fat: fat,
+      carb: carb,
+      protein: protein,
+      sugar: sugar,
+      sodium: sodium,
+      fiber: fiber,
+    },
+  };
+
+  let dataArr = [];
+  dataArr.push(params1.Item);
+
+  try {
+    const data = await dynamodb.put(params).promise();
+    const info = await dynamodb.put(params1).promise();
+
+    console.log("Item entered successfully:", data);
+    console.log("Item entered successfully:", info);
+  } catch (err) {
+    console.log("Error", err);
+  }
+
+  let res = {
+    info: params.Item,
+    data: params1.Item,
+  };
+  console.log(res);
+
+  return {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+      "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+    },
+    statusCode: 200,
+    body: JSON.stringify(res),
+  };
 };
 
 module.exports.postOthersMenuTaste = async (event) => {
@@ -164,7 +208,6 @@ module.exports.postOthersMenuTaste = async (event) => {
   } catch (err) {
     console.log("Error", err);
   }
-
   console.log("Success: Everything executed correctly");
   return {
     headers: {

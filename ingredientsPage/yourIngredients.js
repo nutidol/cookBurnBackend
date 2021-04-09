@@ -47,7 +47,7 @@ module.exports.getYourIngredients = (event, context, callback) => {
     KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
     ExpressionAttributeValues: {
       ":pk": `user_${userID}`,
-      ":sk": "ingredient",
+      ":sk": "ingredient_",
     },
   };
 

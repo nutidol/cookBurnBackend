@@ -3,30 +3,11 @@ const fetch = require("node-fetch");
 
 //post menuFilter
 
-//steps
-////1. get input from front --> userID, genfor [{},{},...], filter {...}, serving size
-////2. get user's ingredient and quantity --> [{ingredient: pork, qty: 10, unit: gram}, {...}, {...}] from database by userID
-//3. all ingredients to api link and fetch menu recipes --> keep menu id
-//4. from that recipes --> go through --> add menu info to database
-//4.1 if missing ingredient == 0 --> check amount of that used ingredient of each menu --> scoring (if some is not enough then count it as missing and add that missing to db)
-// go to another api link to check amount ***** reduce ingredient to 1 serving before map --> update ** ingredient qty and nutrition ** according to user's input (servings) --> update attribute cuisine (Thai, notThai)
-//4.2 if missing ingredient > 0 --> keep that missing ingredient to database and scoring
-//5. get all possible menu list
-//6. get nutrition of genfor --> calculate the nutrition per meal of that peep (either user only or user and fam)
-//7. get base nutrition (incase user's dont specify it --> use the default value
-//8. drop menu nutrition (already update according to servings) that not suit with user's genfor preference from no6 and7 ex) calories over minimum, sodium over minimun
-
-// scoring criteria 1.ingredients score 2.cuisine pref score 3.taste pref score -----> score out of 100
-
-//9. gothrou each menu information update score --> if menu's cuisine == Thai, user's Thai pref score * 25, else notThai*25
-//10. go throu each menu check taste if top four is the same --> score1, if same only top3 --> score 0.75, if only top2 --> score 0.5, if only top1 same --> score 0.25, no same at all --> 0
-//11 get filter (max, min) using results from #6 and 7 --> use filter to min and max each constraint to it defualt value of that search ex) min duration --> recommend menu will show up first in the row
-// from all menu ge max min according to user's input at first place (no matter score it has...)
-
 module.exports.genMenu = async (event) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
   const userID = data.userID;
+  const timestamp = data.timestamp;
   const genFor = data.genFor; // get an array of this of this
   const genBy = data.genBy;
   const servingSize = data.servingSize;
@@ -38,7 +19,56 @@ module.exports.genMenu = async (event) => {
   let total_sugar = 0;
   let total_protein = 0;
   let total_sodium = 0;
+  let total_fiber = 0;
+  let menuID = 0;
+  let menuTitle = "";
+  let genMenuData = [];
+  let missedCount = 0;
+  let usedCount = 0;
+  let duration = 0;
+  let convertedAmount = 0;
+  let unit = "";
+  let ingredientData = [];
 
+  let userUnit = "";
+  let userAmount = 0;
+
+  let convertedUnitAmount = 0;
+  let menuServing = 0;
+  let ingredientID = 0;
+  let missingIngredient = [];
+  let lackingIngredient = [];
+
+  let ingredientName = "";
+  let amount = 0;
+
+  let actualUsedCount = 0;
+  let ingredientScore = 0;
+  let cuisineScore = 0;
+  let tasteScore = 0;
+  let hasThai = 0;
+
+  let missedIngredients = [];
+  let usedIngredients = [];
+
+  let total_thai = 0;
+  let total_notthai = 0;
+  let sumfat = 0;
+  let sumspicy = 0;
+  let sumsalty = 0;
+  let sumbitter = 0;
+  let sumsavory = 0;
+  let sumsweet = 0;
+  let sumsour = 0;
+
+  let menuEnergy = 0;
+  let menuFat = 0;
+  let menuCarb = 0;
+  let menuSugar = 0;
+  let menuProtein = 0;
+  let menuSodium = 0;
+  let menuFiber = 0;
+  let params = {};
   for (let i = 0; i < genFor.length; i++) {
     const name = genFor[i].profile;
     const profileInfo = await getProfileInfo(userID, name);
@@ -48,24 +78,52 @@ module.exports.genMenu = async (event) => {
     total_sugar += parseInt(profileInfo.sugar);
     total_protein += parseInt(profileInfo.protein);
     total_sodium += parseInt(profileInfo.sodium);
+    total_fiber += parseInt(profileInfo.fiber);
+
+    const cuisineInfo = await getUserCuisine(userID, name);
+    total_thai += cuisineInfo.thai;
+    total_notthai += cuisineInfo.notthai;
+
+    const tasteInfo = await getUserTaste(userID, name);
+    sumfat += tasteInfo.fattiness;
+    sumspicy += tasteInfo.spiciness;
+    sumsalty += tasteInfo.saltiness;
+    sumbitter += tasteInfo.bitterness;
+    sumsavory += tasteInfo.savoriness;
+    sumsweet += tasteInfo.sweetness;
+    sumsour += tasteInfo.sourness;
   }
+  const thaiAvg = total_thai / genFor.length;
+  const notThaiAvg = total_notthai / genFor.length;
 
-  //parseInt??
-  const energyAvg = total_energy / genFor.length;
-  const fatAvg = total_fat / genFor.length;
-  const carbAvg = total_carb / genFor.length;
-  const sugarAvg = total_sugar / genFor.length;
-  const proteinAvg = total_protein / genFor.length;
-  const sodiumAvg = total_sodium / genFor.length;
+  const fattinessAvg = sumfat / genFor.length;
+  const spicinessAvg = sumspicy / genFor.length;
+  const saltinessAvg = sumsalty / genFor.length;
+  const bitternessAvg = sumbitter / genFor.length;
+  const savorinessAvg = sumsavory / genFor.length;
+  const sweetnessAvg = sumsweet / genFor.length;
+  const sournessAvg = sumsour / genFor.length;
 
-  const nutrition = {
-    energy: energyAvg,
-    fat: fatAvg,
-    carb: carbAvg,
-    sugar: sugarAvg,
-    protein: proteinAvg,
-    sodium: sodiumAvg,
+  const taste = {
+    fattiness: fattinessAvg,
+    spiciness: spicinessAvg,
+    saltiness: saltinessAvg,
+    bitterness: bitternessAvg,
+    savoriness: savorinessAvg,
+    sweetness: sweetnessAvg,
+    sourness: sournessAvg,
   };
+  const userTasteRank = await getRanked(taste);
+
+  //user's gen data of ..(genby).. --> nutrition per meal
+  const energyAvg = Math.round((total_energy / genFor.length / 3) * 100) / 100;
+  const fatAvg = Math.round((total_fat / genFor.length / 3) * 100) / 100;
+  const carbAvg = Math.round((total_carb / genFor.length / 3) * 100) / 100;
+  const sugarAvg = Math.round((total_sugar / genFor.length / 3) * 100) / 100;
+  const proteinAvg =
+    Math.round((total_protein / genFor.length / 3) * 100) / 100;
+  const sodiumAvg = Math.round((total_sodium / genFor.length / 3) * 100) / 100;
+  const fiberAvg = Math.round((total_fiber / genFor.length / 3) * 100) / 100;
 
   const userIngredient = await getUserIngredient(userID);
 
@@ -73,18 +131,255 @@ module.exports.genMenu = async (event) => {
     ingredientNameList += userIngredient[i].name + ",";
   }
   const possibleMenus = await getPossibleMenu(ingredientNameList);
-
   for (let i = 0; i < possibleMenus.length; i++) {
     menuID_str += possibleMenus[i].id + ",";
   }
   const menuInfo = await getMenuInfo(menuID_str);
 
-  const response = {
-    nutrition: nutrition,
-    ingredient: userIngredient,
-    menu: possibleMenus,
-    menuInfo: menuInfo,
-  };
+  for (let i = 0; i < possibleMenus.length; i++) {
+    menuID = possibleMenus[i].id;
+    menuTitle = possibleMenus[i].title;
+
+    for (let j = 0; j < menuInfo.length; j++) {
+      if (menuID == menuInfo[j].id) {
+        console.log(menuID);
+
+        missedCount = possibleMenus[i].missedIngredientCount;
+        usedCount = possibleMenus[i].usedIngredientCount;
+        missedIngredients = possibleMenus[i].missedIngredients;
+        usedIngredients = possibleMenus[i].usedIngredients;
+        duration = menuInfo[j].preparationMinutes + menuInfo[j].cookingMinutes;
+        missingIngredient = [];
+        lackingIngredient = [];
+        ingredientData = [];
+        hasThai = 0;
+
+        menuServing = menuInfo[j].servings;
+        //if there's missing ingredient
+        if (missedCount != 0) {
+          for (let n = 0; n < missedCount; n++) {
+            ingredientName = missedIngredients[n].name;
+            missingIngredient.push(ingredientName);
+          }
+        }
+        //loop through used ingredient -> lack or not
+        for (let k = 0; k < usedCount; k++) {
+          ingredientID = usedIngredients[k].id;
+          ingredientName = usedIngredients[k].name;
+          amount = usedIngredients[k].amount;
+          convertedAmount = servingSize * (amount / menuServing);
+          unit = usedIngredients[k].unit;
+
+          for (let m = 0; m < userIngredient.length; m++) {
+            userIngredientID = userIngredient[m].id;
+            userIngredientName = userIngredient[m].name;
+            userAmount = userIngredient[m].quantity;
+            userUnit = userIngredient[m].unit;
+
+            if (
+              ingredientID == userIngredientID ||
+              ingredientName.includes(userIngredientName) ||
+              userIngredientName.includes(ingredientName)
+            ) {
+              if (
+                userUnit == unit ||
+                unit.includes(userUnit) ||
+                userUnit.includes(unit)
+              ) {
+                if (userAmount < convertedAmount) {
+                  lackingIngredient.push(ingredientName);
+                  //if want to tell how many can calculate here
+                }
+              } else {
+                convertedUnitAmount = await convertAmount(
+                  ingredientName,
+                  convertedAmount,
+                  unit,
+                  userUnit
+                );
+                if (userAmount < convertedUnitAmount) {
+                  lackingIngredient.push(ingredientName);
+                  //if want to tell how many can calculate here
+                }
+              }
+            }
+          }
+        }
+        //score ingredient = 50 (match/all) = 50(used/use+miss)
+        //miss1, use1 --> use/(miss+use) = 25
+        //miss1, use2(lack1) --> use-lack/(miss+use) = 1/3(50)
+        actualUsedCount = usedCount - lackingIngredient.length;
+        ingredientScore =
+          Math.round(50 * (actualUsedCount / (usedCount + missedCount)) * 100) /
+          100;
+        //update score (cuisine, taste)
+        //cuisine
+        //loop through menu's array if there's thai
+        if (menuInfo[j].cuisines.length == 0) {
+          cuisineScore = notThaiAvg * 25;
+        } else {
+          for (let q = 0; q < menuInfo[j].cuisines.length; q++) {
+            let cuisine = menuInfo[j].cuisines[q];
+            if (cuisine == "Thai") {
+              hasThai++;
+            }
+          }
+          if (hasThai == 1) {
+            cuisineScore = thaiAvg * 25;
+          } else {
+            cuisineScore = notThaiAvg * 25;
+          }
+        }
+        // taste
+        // get tasteRank of this menuID
+        // compare with userTasteRank
+        const menuTaste = await getMenuTaste(menuID);
+        const menuTasteRank = await getRanked(menuTaste);
+
+        if (menuTasteRank.one == userTasteRank.one) {
+          tasteScore = Math.round((1 / 7) * 25 * 100) / 100;
+          if (menuTasteRank.two == userTasteRank.two) {
+            tasteScore = Math.round((2 / 7) * 25 * 100) / 100;
+            if (menuTasteRank.three == userTasteRank.three) {
+              tasteScore = Math.round((3 / 7) * 25 * 100) / 100;
+              if (menuTasteRank.four == userTasteRank.four) {
+                tasteScore = Math.round((4 / 7) * 25 * 100) / 100;
+                if (menuTasteRank.five == userTasteRank.five) {
+                  tasteScore = Math.round((5 / 7) * 25 * 100) / 100;
+                  if (menuTasteRank.six == userTasteRank.six) {
+                    tasteScore = Math.round((6 / 7) * 25 * 100) / 100;
+                    if (menuTasteRank.seven == userTasteRank.seven) {
+                      tasteScore = 25;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          tasteScore = 0;
+        }
+
+        //get ingredient info (converted qty, unit)
+        for (let p = 0; p < menuInfo[j].extendedIngredients.length; p++) {
+          let menuInfoIngredientID = menuInfo[j].extendedIngredients[p].id;
+          let menuInfoIngredientName = menuInfo[j].extendedIngredients[p].name;
+          let menuInfoAmount = menuInfo[j].extendedIngredients[p].amount;
+          let menuInfoConvertedAmount =
+            servingSize * (menuInfoAmount / menuServing);
+          let menuInfoUnit = menuInfo[j].extendedIngredients[p].unit;
+          ingredientData.push({
+            id: menuInfoIngredientID,
+            name: menuInfoIngredientName,
+            amount: menuInfoConvertedAmount,
+            unit: menuInfoUnit,
+          });
+        }
+
+        //update menu nutrition according to serving size (this case nutrition already per 1 serving size)
+        for (let s = 0; s < menuInfo[j].nutrition.nutrients.length; s++) {
+          if (menuInfo[j].nutrition.nutrients[s].name == "Calories") {
+            menuEnergy = menuInfo[j].nutrition.nutrients[s].amount;
+          }
+          if (menuInfo[j].nutrition.nutrients[s].name == "Fat") {
+            menuFat = menuInfo[j].nutrition.nutrients[s].amount;
+          }
+          if (menuInfo[j].nutrition.nutrients[s].name == "Carbohydrates") {
+            menuCarb = menuInfo[j].nutrition.nutrients[s].amount;
+          }
+          if (menuInfo[j].nutrition.nutrients[s].name == "Sugar") {
+            menuSugar = menuInfo[j].nutrition.nutrients[s].amount;
+          }
+          if (menuInfo[j].nutrition.nutrients[s].name == "Protein") {
+            menuProtein = menuInfo[j].nutrition.nutrients[s].amount;
+          }
+          if (menuInfo[j].nutrition.nutrients[s].name == "Sodium") {
+            menuSodium = menuInfo[j].nutrition.nutrients[s].amount;
+          }
+          if (menuInfo[j].nutrition.nutrients[s].name == "Fiber") {
+            menuFiber = menuInfo[j].nutrition.nutrients[s].amount;
+          }
+        }
+        const nutrition = {
+          energy: menuEnergy * servingSize,
+          fat: menuFat * servingSize,
+          carb: menuCarb * servingSize,
+          sugar: menuSugar * servingSize,
+          protein: menuProtein * servingSize,
+          sodium: menuSodium * servingSize,
+          fiber: menuFiber * servingSize,
+        };
+
+        if (
+          menuEnergy <= energyAvg &&
+          menuFat <= fatAvg &&
+          menuCarb <= carbAvg &&
+          menuSugar <= sugarAvg &&
+          menuProtein <= proteinAvg &&
+          menuSodium <= sodiumAvg &&
+          menuFiber <= fiberAvg
+        ) {
+          let recipe = menuInfo[j].analyzedInstructions[0].steps;
+          let recipeStep = [];
+          for (let r = 0; r < recipe.length; r++) {
+            let step = recipe[r].number;
+            let instruction = recipe[r].step;
+            recipeStep.push({
+              step: step,
+              instruction: instruction,
+            });
+          }
+          let params = {
+            TableName: tableName,
+            Item: {
+              PK: `user_${userID}`,
+              SK: `gen_${timestamp}_${menuID}`,
+              id: menuID,
+              title: menuTitle,
+              duration: duration,
+              score: ingredientScore + cuisineScore + tasteScore,
+              missingIngredient: missingIngredient,
+              lackingIngredient: lackingIngredient,
+              ingredientData: ingredientData,
+              nutrition: nutrition,
+              recipe: recipeStep,
+              timestamp: timestamp + "",
+              servingSize: servingSize,
+              genFor: genFor,
+              genBy: genBy,
+            },
+          };
+          try {
+            await dynamodb.put(params).promise();
+            console.log("Success");
+          } catch (err) {
+            console.log("Error", err);
+          }
+          console.log(`Success: Everything executed correctly for menuID : ${menuID}`);
+
+          ///push to database
+          genMenuData.push({
+            menuID: menuID,
+            miss: missingIngredient,
+            lack: lackingIngredient,
+            score: ingredientScore,
+            cuisineScore: cuisineScore,
+            tasteScore: tasteScore,
+            usedCount: usedCount,
+            missedCount: missedCount,
+            ingredientData: ingredientData,
+            userTasteRank: userTasteRank,
+            menuTasteRank: menuTasteRank,
+            duration: duration,
+            nutrition: nutrition,
+            recipe: recipeStep,
+          });
+        }
+      }
+    }
+  }
+
+  //loop throuh genMenuData find max/min of genBy --> optimized
 
   return {
     headers: {
@@ -93,7 +388,7 @@ module.exports.genMenu = async (event) => {
       "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
     },
     statusCode: 200,
-    body: JSON.stringify(response),
+    body: JSON.stringify(genMenuData),
   };
 };
 
@@ -124,7 +419,9 @@ const getUserIngredient = async (userID) => {
 
 const getPossibleMenu = async (userIngredient) => {
   let ingredientList = userIngredient.slice(0, -1);
-  let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=e6b34e7165a042a49a19811bc0057118&ingredients=${ingredientList}&ignorePantry=true&ranking=1`;
+  // let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=4631dc8e84774bf39edd76df5679ba38&ingredients=${ingredientList}&ignorePantry=true&ranking=1`;
+  let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=7b9f2b35ba8f4fe697b93357fdc09314&ingredients=${ingredientList}&ignorePantry=true&ranking=1&number=20`;
+
   let res = await fetch(search_url);
   let json = await res.json();
   return json;
@@ -132,8 +429,103 @@ const getPossibleMenu = async (userIngredient) => {
 
 const getMenuInfo = async (menuIDs) => {
   let menuIDList = menuIDs.slice(0, -1);
-  let search_url = `https://api.spoonacular.com/recipes/informationBulk?apiKey=e6b34e7165a042a49a19811bc0057118&ids=${menuIDList}&includeNutrition=true`;
+  let search_url = `https://api.spoonacular.com/recipes/informationBulk?apiKey=7b9f2b35ba8f4fe697b93357fdc09314&ids=${menuIDList}&includeNutrition=true`;
   let res = await fetch(search_url);
   let json = await res.json();
   return json;
 };
+
+const convertAmount = async (
+  ingredientName,
+  convertedAmount,
+  unit,
+  userUnit
+) => {
+  let amount = convertedAmount;
+  ///maybe try your own conversion
+  let search_url = `https://api.spoonacular.com/recipes/convert?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8&ingredientName=${ingredientName}&sourceAmount=${convertedAmount}&sourceUnit=${unit}&targetUnit=${userUnit}`;
+  try {
+    let res = await fetch(search_url);
+    let json = await res.json();
+    amount = json.targetAmount;
+  } catch (err) {
+    console.log(err);
+  }
+  return amount;
+};
+
+const getUserCuisine = async (userID, profileName) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    Key: {
+      PK: `user_${userID}`,
+      SK: `cuisine_${profileName}`,
+    },
+  };
+  const result = await dynamodb.get(params).promise();
+  return result.Item;
+};
+
+const getUserTaste = async (userID, profileName) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    Key: {
+      PK: `user_${userID}`,
+      SK: `taste_${profileName}`,
+    },
+  };
+  const result = await dynamodb.get(params).promise();
+  return result.Item;
+};
+
+const getMenuTaste = async (menuID) => {
+  let search_url = `https://api.spoonacular.com/recipes/${menuID}/tasteWidget.json?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8`;
+  let res = await fetch(search_url);
+  let json = await res.json();
+  return json;
+};
+
+const getRanked = async (json) => {
+  let entries = Object.entries(json);
+  let sorted = entries.sort((a, b) => b[1] - a[1]);
+  let first = sorted[0][0];
+  let second = sorted[1][0];
+  let third = sorted[2][0];
+  let fourth = sorted[3][0];
+  let fifth = sorted[4][0];
+  let sixth = sorted[5][0];
+  let seventh = sorted[6][0];
+  let rank = {
+    one: first,
+    two: second,
+    three: third,
+    four: fourth,
+    five: fifth,
+    six: sixth,
+    seven: seventh,
+  };
+  return rank;
+};
+
+const getOptimized = async (menuArr, genBy) => {
+  //   "genBy": {
+  //     "duration": "min",
+  //     "energy": "min",
+  //     "fat": "min",
+  //     "carb": "min",Î
+  //     "sugar": "min",
+  //     "protein": "max",
+  //     "sodium": "min"
+  // },
+};
+
+//saetang.nattharika
+//e15593c068d142fa9cf278b7a68e8638
+//nutidol@gmail
+//e6b34e7165a042a49a19811bc0057118
+//6031748721
+//4631dc8e84774bf39edd76df5679ba38
+//newnicknat
+//57dea7a7968e4f2fb29c0fe73b479ce8
+//nutidol@hotmail
+//7b9f2b35ba8f4fe697b93357fdc09314

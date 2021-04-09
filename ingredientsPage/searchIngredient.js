@@ -32,6 +32,9 @@ module.exports.getSearchIngredient = async (event) => {
   let json2 = await getIngredientInfo(search_unit);
   let unit = json2.possibleUnits;
   console.log(unit);
+  let response = []
+  let PK = "ingredient"
+  let SK = "mock_123"
 
   // const headers = {
   //   "Access-Control-Allow-Origin": "*", // Required for CORS support to work
@@ -39,13 +42,16 @@ module.exports.getSearchIngredient = async (event) => {
   // };
 
   const result = {
+    PK:PK,
+    SK:SK,
     ingredientID: ingredientID,
     name: ingredientName,
     url: image_url,
     unit: unit,
   };
+  response.push(result)
 
-  return result;
+  return response;
 };
 
 async function getIngredientInfo(search_url) {
