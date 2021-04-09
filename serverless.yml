@@ -181,8 +181,21 @@ functions:
       - http:
           path: menuPage/menus/{id}/{timestamp}
           method: get
-          cors: true          
-
+          cors: true
+  getMenu:
+    handler: menuPage/menu.getMenu
+    events:
+      - http:
+          path: menuPage/menu/{id}/{sortKey}
+          method: get
+          cors: true
+  postMenu:
+    handler: menuPage/menu.postMenu
+    events:
+      - http:
+          path: menuPage/menu
+          method: post
+          cors: true
 
 
 # WORKOUT PAGE

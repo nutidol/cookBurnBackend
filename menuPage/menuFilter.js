@@ -68,7 +68,8 @@ module.exports.genMenu = async (event) => {
   let menuProtein = 0;
   let menuSodium = 0;
   let menuFiber = 0;
-  let params = {};
+  let url = "";
+
   for (let i = 0; i < genFor.length; i++) {
     const name = genFor[i].profile;
     const profileInfo = await getProfileInfo(userID, name);
@@ -139,6 +140,7 @@ module.exports.genMenu = async (event) => {
   for (let i = 0; i < possibleMenus.length; i++) {
     menuID = possibleMenus[i].id;
     menuTitle = possibleMenus[i].title;
+    url = possibleMenus[i].image;
 
     for (let j = 0; j < menuInfo.length; j++) {
       if (menuID == menuInfo[j].id) {
@@ -347,6 +349,7 @@ module.exports.genMenu = async (event) => {
               servingSize: servingSize,
               genFor: genFor,
               genBy: genBy,
+              url: url,
             },
           };
           try {
@@ -355,7 +358,9 @@ module.exports.genMenu = async (event) => {
           } catch (err) {
             console.log("Error", err);
           }
-          console.log(`Success: Everything executed correctly for menuID : ${menuID}`);
+          console.log(
+            `Success: Everything executed correctly for menuID : ${menuID}`
+          );
 
           ///push to database
           genMenuData.push({
