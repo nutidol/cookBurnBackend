@@ -33,6 +33,11 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}/index/*"
 # plugins:
 #   # - serverless-webpack
 #   - serverless-offline
@@ -120,6 +125,7 @@ functions:
           path: homePage/dailyInfo/{id}
           method: get
           cors: true
+
 # INGREDIENT PAGE
   getSearchIngredient:
     handler: ingredientsPage/searchIngredient.getSearchIngredient
@@ -197,11 +203,31 @@ functions:
           method: post
           cors: true
 
-
 # WORKOUT PAGE
-
+  genWorkout:
+    handler: workoutPage/genWorkout.genWorkout
+    events:
+      - http:
+          path: workoutPage/genWorkout/{id}
+          method: get
+          cors: true
+  getWorkout:
+    handler: workoutPage/workout.getWorkout
+    events:
+      - http:
+          path: workoutPage/workoutInfo/{id}/{sortKey}
+          method: get
+          cors: true
+  postWorkout:
+    handler: workoutPage/workout.postWorkout
+    events:
+      - http:
+          path: workoutPage/workoutInfo
+          method: post
+          cors: true      
 
 # SETTING PAGE
+
   getUserFullInfo:
     handler: settingPage/editProfile.getUserFullInfo
     events:
@@ -252,9 +278,6 @@ functions:
 
 
 
-
-
-
   hello:
     handler: handler.hello
     events:
@@ -302,7 +325,11 @@ functions:
   #       path: todos/{id}
   #       method: delete
   #       cors: true
-# resources:
+
+
+
+
+  # resources:
 #   Resources:
 #     dynamoDbTable:
 #       Type: 'AWS::DynamoDB::Table'

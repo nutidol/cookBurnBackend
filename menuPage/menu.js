@@ -55,6 +55,7 @@ module.exports.postMenu = async (event) => {
   const genFor = cookedMenu.genFor;
   const genBy = cookedMenu.genBy;
   const url = cookedMenu.url;
+  const workoutstatus = "false";
 
   let params = {
     TableName: tableName,
@@ -75,6 +76,7 @@ module.exports.postMenu = async (event) => {
       genFor: genFor,
       genBy: genBy,
       url: url,
+      workoutstatus: workoutstatus,
     },
   };
   try {

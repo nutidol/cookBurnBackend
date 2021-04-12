@@ -1,6 +1,4 @@
-'use strict'
-
-
+"use strict";
 
 module.exports.hello = async (event) => {
   const data = JSON.parse(event.body);
@@ -14,11 +12,10 @@ module.exports.hello = async (event) => {
   const fattiness = data.fattiness;
   const spiciness = data.spiciness;
 
-  const sweet =  `{"sweetness": {"N": "${sweetness}"}, \n"saltiness": {"N": "${saltiness}"}, \n "sourness":{"N": "${sourness}"}, \n"bitterness": {"N": "${bitterness}"}, \n"savoriness": {"N": "${savoriness}"}, \n "fattiness":{"N": "${fattiness}"}, \n "spiciness":{"N": "${spiciness}"}}`
-
+  const res = `{"sweetness": {"N": "${sweetness}"}, \n"saltiness": {"N": "${saltiness}"}, \n "sourness":{"N": "${sourness}"}, \n"bitterness": {"N": "${bitterness}"}, \n"savoriness": {"N": "${savoriness}"}, \n "fattiness":{"N": "${fattiness}"}, \n "spiciness":{"N": "${spiciness}"}}`;
 
   return {
     statusCode: 200,
-    body: sweet
+    body: res,
   };
 };
