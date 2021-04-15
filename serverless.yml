@@ -125,6 +125,38 @@ functions:
           path: homePage/dailyInfo/{id}
           method: get
           cors: true
+  getUpdateDailyInfo:
+    handler: homePage/updateDailyInfo.getUpdateDailyInfo
+    events:
+      - http:
+          path: homePage/updateDailyInfo/{id}
+          method: get
+          cors: true
+
+  getRecentActivities:
+    handler: homePage/recentActivities.getRecentActivities
+    events:
+      - http:
+          path: homePage/recentActivities/{id}
+          method: get
+          cors: true
+
+  getCardInfo:
+    handler: homePage/cardInfo.getCardInfo
+    events:
+      - http:
+          path: homePage/cardInfo/{id}/{sortKey}
+          method: get
+          cors: true 
+
+  postCardInfo:
+    handler: homePage/cardInfo.postCardInfo
+    events:
+      - http:
+          path: homePage/cardInfo
+          method: post
+          cors: true
+          
 
 # INGREDIENT PAGE
   getSearchIngredient:
@@ -179,15 +211,6 @@ functions:
       - http:
           path: menuPage/menuFilter
           method: post
-          cors: true
-
-  genMenu2:
-    handler: menuPage/menuFilter.genMenu2
-    timeout: 60
-    events:
-      - http:
-          path: menuPage/genMenu
-          method: get
           cors: true
 
   getMenus:

@@ -47,6 +47,7 @@ module.exports.postMenu = async (event) => {
   const score = cookedMenu.score;
   const missingIngredient = cookedMenu.missingIngredient;
   const lackingIngredient = cookedMenu.lackingIngredient;
+  const totalLackIngredient = cookedMenu.totalLackIngredient;
   const ingredientData = cookedMenu.ingredientData;
   const nutrition = cookedMenu.nutrition;
   const timestamp = cookedMenu.timestamp;
@@ -68,6 +69,7 @@ module.exports.postMenu = async (event) => {
       score: score,
       missingIngredient: missingIngredient,
       lackingIngredient: lackingIngredient,
+      totalLackIngredient: totalLackIngredient,
       ingredientData: ingredientData,
       nutrition: nutrition,
       recipe: recipeStep,

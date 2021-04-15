@@ -2,7 +2,7 @@ const dynamodb = require("../dynamodb");
 const fetch = require("node-fetch");
 
 //post menuFilter
-
+//energy avg devided by three!!!!
 module.exports.genMenu = async (event) => {
   const data = JSON.parse(event.body);
   const userID = data.userID;
@@ -37,6 +37,7 @@ module.exports.genMenu = async (event) => {
   let ingredientID = 0;
   let missingIngredient = [];
   let lackingIngredient = [];
+  let totalLackIngredient = [];
 
   let ingredientName = "";
   let amount = 0;
@@ -153,6 +154,7 @@ module.exports.genMenu = async (event) => {
         missingIngredient = [];
         lackingIngredient = [];
         ingredientData = [];
+        totalLackIngredient = [];
         hasThai = 0;
 
         menuServing = menuInfo[j].servings;
@@ -161,6 +163,7 @@ module.exports.genMenu = async (event) => {
           for (let n = 0; n < missedCount; n++) {
             ingredientName = missedIngredients[n].name;
             missingIngredient.push(ingredientName);
+            totalLackIngredient.push(ingredientName);
           }
         }
         //loop through used ingredient -> lack or not
@@ -189,6 +192,7 @@ module.exports.genMenu = async (event) => {
               ) {
                 if (userAmount < convertedAmount) {
                   lackingIngredient.push(ingredientName);
+                  totalLackIngredient.push(ingredientName);
                   //if want to tell how many can calculate here
                 }
               } else {
@@ -200,6 +204,8 @@ module.exports.genMenu = async (event) => {
                 );
                 if (userAmount < convertedUnitAmount) {
                   lackingIngredient.push(ingredientName);
+                  totalLackIngredient.push(ingredientName);
+
                   //if want to tell how many can calculate here
                 }
               }
@@ -272,7 +278,7 @@ module.exports.genMenu = async (event) => {
           ingredientData.push({
             id: menuInfoIngredientID,
             name: menuInfoIngredientName,
-            amount: menuInfoConvertedAmount,
+            amount: Math.round(menuInfoConvertedAmount * 100) / 100,
             unit: menuInfoUnit,
           });
         }
@@ -344,6 +350,7 @@ module.exports.genMenu = async (event) => {
               score: ingredientScore + cuisineScore + tasteScore,
               missingIngredient: missingIngredient,
               lackingIngredient: lackingIngredient,
+              totalLackIngredient: totalLackIngredient,
               ingredientData: ingredientData,
               nutrition: nutrition,
               recipe: recipeStep,
@@ -383,6 +390,24 @@ module.exports.genMenu = async (event) => {
   }
 
   //loop throuh genMenuData find max/min of genBy --> optimized
+  let optimizedMenu = await getOptimized(genMenuData, genBy);
+  if (optimizedMenu != undefined) {
+    let params = {
+      TableName: process.env.DYNAMODB_TABLE,
+      Item: {
+        PK: `user_${userID}`,
+        SK: `optimised_${timestamp}`,
+        genKey: optimizedMenu,
+      },
+    };
+    try {
+      await dynamodb.put(params).promise();
+      console.log(`Success: optimsed_${timestamp}`);
+    } catch (err) {
+      console.log("Error", err);
+      console.log(params.Item);
+    }
+  }
 
   return {
     headers: {
@@ -391,7 +416,8 @@ module.exports.genMenu = async (event) => {
       "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
     },
     statusCode: 200,
-    body: JSON.stringify(genMenuData),
+    // body: JSON.stringify(genMenuData),
+    body: JSON.stringify(optimizedMenu),
   };
 };
 
@@ -512,17 +538,191 @@ const getRanked = async (json) => {
   return rank;
 };
 
-// const getOptimized = async (menuArr, genBy) => {
-//   //   "genBy": {
-//   //     "duration": "min",
-//   //     "energy": "min",
-//   //     "fat": "min",
-//   //     "carb": "min",Î
-//   //     "sugar": "min",
-//   //     "protein": "max",
-//   //     "sodium": "min"
-//   // },
-// };
+const getOptimized = async (menuArr, genBy) => {
+  const opDuration = genBy.duration;
+  const opEnergy = genBy.energy;
+  const opFat = genBy.fat;
+  const opCarb = genBy.carb;
+  const opSugar = genBy.sugar;
+  const opProtein = genBy.protein;
+  const opSodium = genBy.sodium;
+  const opFiber = genBy.fiber;
+  let menuIDs = [];
+
+  let scoreObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.score }),
+    {}
+  );
+  let durationObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.duration }),
+    {}
+  );
+  let energyObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.energy }),
+    {}
+  );
+  let fatObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.fat }),
+    {}
+  );
+  let carbObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.carb }),
+    {}
+  );
+  let sugarObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.sugar }),
+    {}
+  );
+  let proteinObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.protein }),
+    {}
+  );
+  let sodiumObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.sodium }),
+    {}
+  );
+  let fiberObj = menuArr.reduce(
+    (obj, item) => Object.assign(obj, { [item.SK]: item.fiber }),
+    {}
+  );
+  //check duration
+  if (opDuration == "max") {
+    let menu = await checkMax(durationObj);
+    menuIDs.push(menu);
+  } else if (opDuration == "min") {
+    let menu = await checkMin(durationObj);
+    menuIDs.push(menu);
+  } else {
+    let menu = await checkMax(scoreObj);
+    menuIDs.push(menu);
+  }
+  //check energy
+  if (opEnergy == "max") {
+    let menu = await checkMax(energyObj);
+    menuIDs.push(menu);
+  } else if (opEnergy == "min") {
+    let menu = await checkMin(energyObj);
+    menuIDs.push(menu);
+  } else {
+    let menu = await checkMax(scoreObj);
+    menuIDs.push(menu);
+  }
+  //check fat
+  if (opFat == "max") {
+    let menu = await checkMax(fatObj);
+    menuIDs.push(menu);
+  } else if (opFat == "min") {
+    let menu = await checkMin(fatObj);
+    menuIDs.push(menu);
+  } else if (opFat == "0") {
+    let menu = await checkZero(fatObj);
+    if (menu != 0) {
+      menuIDs.push(menu);
+    }
+  } else {
+    let menu = await checkMax(scoreObj);
+    menuIDs.push(menu);
+  }
+  //check carb
+  if (opCarb == "max") {
+    let menu = await checkMax(carbObj);
+    menuIDs.push(menu);
+  } else if (opCarb == "min") {
+    let menu = await checkMin(carbObj);
+    menuIDs.push(menu);
+  } else if (opCarb == "0") {
+    let menu = await checkZero(carbObj);
+    if (menu != 0) {
+      menuIDs.push(menu);
+    }
+  } else {
+    let menu = await checkMax(scoreObj);
+    menuIDs.push(menu);
+  }
+  //check sugar
+  if (opSugar == "max") {
+    let menu = await checkMax(sugarObj);
+    menuIDs.push(menu);
+  } else if (opSugar == "min") {
+    let menu = await checkMin(sugarObj);
+    menuIDs.push(menu);
+  } else if (opSugar == "0") {
+    let menu = await checkZero(sugarObj);
+    if (menu != 0) {
+      menuIDs.push(menu);
+    }
+  } else {
+    let menu = await checkMax(scoreObj);
+    menuIDs.push(menu);
+  }
+  //check protein
+  if (opProtein == "max") {
+    let menu = await checkMax(proteinObj);
+    menuIDs.push(menu);
+  } else if (opProtein == "min") {
+    let menu = await checkMin(proteinObj);
+    menuIDs.push(menu);
+  } else if (opProtein == "0") {
+    let menu = await checkZero(proteinObj);
+    if (menu != 0) {
+      menuIDs.push(menu);
+    }
+  } else {
+    let menu = await checkMax(scoreObj);
+    menuIDs.push(menu);
+  }
+  //check sodium
+  if (opSodium == "max") {
+    let menu = await checkMax(sodiumObj);
+    menuIDs.push(menu);
+  } else if (opSodium == "min") {
+    let menu = await checkMin(sodiumObj);
+    menuIDs.push(menu);
+  } else if (opSodium == "0") {
+    let menu = await checkZero(sodiumObj);
+    if (menu != 0) {
+      menuIDs.push(menu);
+    }
+  } else {
+    let menu = await checkMax(scoreObj);
+    menuIDs.push(menu);
+  }
+  //check fiber
+  if (opFiber == "max") {
+    let menu = await checkMax(fiberObj);
+    menuIDs.push(menu);
+  } else if (opFiber == "min") {
+    let menu = await checkMin(fiberObj);
+    menuIDs.push(menu);
+  } else if (opFiber == "0") {
+    let menu = await checkZero(fiberObj);
+    if (menu != 0) {
+      menuIDs.push(menu);
+    }
+  } else {
+    let menu = await checkMax(fiberObj);
+    menuIDs.push(menu);
+  }
+  let result = await findUniqueDuplicates(menuIDs);
+  return result[0];
+};
+
+const checkMax = async (obj) => {
+  return Object.keys(obj).reduce((a, b) => (obj[a] > obj[b] ? a : b));
+};
+const checkMin = async (obj) => {
+  return Object.keys(obj).reduce((a, b) => (obj[a] < obj[b] ? a : b));
+};
+const checkZero = async (obj) => {
+  let res = Object.keys(obj).find((key) => obj[key] === 0);
+  if (res == undefined) {
+    return 0;
+  } else return res;
+};
+const findUniqueDuplicates = async (arr) => {
+  let res = arr.filter((item, index) => arr.indexOf(item) !== index);
+  return [...new Set(res)];
+};
 
 //saetang.nattharika
 //e15593c068d142fa9cf278b7a68e8638

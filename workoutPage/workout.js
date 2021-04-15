@@ -12,6 +12,7 @@ module.exports.getWorkout = async (event) => {
   let people = result.genFor.length;
   let title = result.title;
   let energy = result.nutrition.energy / people;
+  let url = result.url;
   let dbEnergy = 0;
   if (energy < 50 && energy > 0) {
     dbEnergy = 0;
@@ -42,15 +43,18 @@ module.exports.getWorkout = async (event) => {
     title: title,
     sortKey: SK,
     energy: energy,
+    url: url,
     workout: workoutInfo.workout,
   };
+  let resArr = [];
+  resArr.push(res);
   return {
     headers: {
       "Access-Control-Allow-Origin": "*", // Required for CORS support to work
       "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
     },
     statusCode: 200,
-    body: JSON.stringify(res),
+    body: JSON.stringify(resArr),
   };
 };
 
@@ -115,11 +119,13 @@ module.exports.postWorkout = async (event) => {
   const data = JSON.parse(event.body);
   const userID = data.userID;
   const timestamp = data.timestamp;
-  const title = data.title;
+  const workoutInfo = data.workoutInfo[0];
+  const title = workoutInfo.title;
   const menu = title.replace(/\s/g, "");
-  const workout = data.workout;
-  const energy = data.energy;
-  const sortKey = data.sortKey;
+  const workout = workoutInfo.workout;
+  const energy = workoutInfo.energy;
+  const sortKey = workoutInfo.sortKey;
+  const url = workoutInfo.url;
 
   let params = {
     TableName: tableName,
@@ -128,7 +134,9 @@ module.exports.postWorkout = async (event) => {
       SK: `workout_${timestamp}_${menu}`,
       title: title,
       energy: energy,
+      url: url,
       workout: workout,
+      timestamp: timestamp + "",
     },
   };
 
@@ -182,6 +190,7 @@ const updateWorkoutStatus = async (userID, sortKey) => {
       servingSize: data.servingSize,
       genFor: data.genFor,
       genBy: data.genBy,
+      url: data.url,
       workoutstatus: "true",
     },
   };
