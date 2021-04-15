@@ -174,11 +174,20 @@ functions:
 
   genMenu:
     handler: menuPage/menuFilter.genMenu
-    timeout: 100
+    timeout: 600
     events:
       - http:
           path: menuPage/menuFilter
           method: post
+          cors: true
+
+  genMenu2:
+    handler: menuPage/menuFilter.genMenu2
+    timeout: 60
+    events:
+      - http:
+          path: menuPage/genMenu
+          method: get
           cors: true
 
   getMenus:

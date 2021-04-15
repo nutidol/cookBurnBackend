@@ -6,7 +6,7 @@ module.exports.getMenuCuisine = (event, context, callback) => {
     KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
     ExpressionAttributeValues: {
       ":pk": "menu",
-      ":sk": "cuisine",
+      ":sk": "cuisine_",
     },
   };
 

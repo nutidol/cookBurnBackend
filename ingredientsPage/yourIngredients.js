@@ -1,4 +1,6 @@
 const dynamodb = require("../dynamodb");
+
+///post url to db too!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 module.exports.postYourIngredients = async (event) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
@@ -17,6 +19,7 @@ module.exports.postYourIngredients = async (event) => {
         quantity: ingredients[i].quantity,
         name: ingredients[i].name,
         unit: ingredients[i].unit,
+        url: ingredients[i].url,
       },
     };
     ingredientArr.push(params.Item);

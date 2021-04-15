@@ -25,13 +25,13 @@ module.exports.getSearchIngredient = async (event) => {
   let response = [];
   let PK = "ingredient";
   let SK = "mock_123";
-  let search_url = `https://api.spoonacular.com/food/ingredients/search?apiKey=e6b34e7165a042a49a19811bc0057118&number=1&query=${ingredient}`;
+  let search_url = `https://api.spoonacular.com/food/ingredients/search?apiKey=7b9f2b35ba8f4fe697b93357fdc09314&number=1&query=${ingredient}`;
   let json = await getIngredientInfo(search_url);
   let ingredientID = json.results[0].id;
   let ingredientName = json.results[0].name;
   let image = json.results[0].image;
   let image_url = `https://spoonacular.com/cdn/ingredients_100x100/${image}`;
-  let search_unit = `https://api.spoonacular.com/food/ingredients/${ingredientID}/information?apiKey=e6b34e7165a042a49a19811bc0057118`;
+  let search_unit = `https://api.spoonacular.com/food/ingredients/${ingredientID}/information?apiKey=7b9f2b35ba8f4fe697b93357fdc09314`;
   let json2 = await getIngredientInfo(search_unit);
   let possibleUnits = json2.possibleUnits;
   console.log(possibleUnits);
@@ -85,17 +85,29 @@ async function cleanUnit(possibleUnits) {
     ) {
       units.push(possibleUnits[i]);
     } else if (
-      possibleUnits[i].includes("pound") ||
-      possibleUnits[i].includes("ounce") ||
-      possibleUnits[i].includes("gallon") ||
-      possibleUnits[i].includes("quart") ||
-      possibleUnits[i].includes("pint") ||
-      possibleUnits[i].includes("cup") ||
-      possibleUnits[i].includes("tablespoon") ||
-      possibleUnits[i].includes("teaspoon")
+      possibleUnits[i] == "pound" ||
+      possibleUnits[i] == "ounce" ||
+      possibleUnits[i] == "gallon" ||
+      possibleUnits[i] == "quart" ||
+      possibleUnits[i] == "pint" ||
+      possibleUnits[i] == "cup" ||
+      possibleUnits[i] == "tablespoon" ||
+      possibleUnits[i] == "teaspoon"
     ) {
       units.push(possibleUnits[i]);
     }
+    // } else if (
+    //   possibleUnits[i].includes("pound") ||
+    //   possibleUnits[i].includes("ounce") ||
+    //   possibleUnits[i].includes("gallon") ||
+    //   possibleUnits[i].includes("quart") ||
+    //   possibleUnits[i].includes("pint") ||
+    //   possibleUnits[i].includes("cup") ||
+    //   possibleUnits[i].includes("tablespoon") ||
+    //   possibleUnits[i].includes("teaspoon")
+    // ) {
+    //   units.push(possibleUnits[i]);
+    // }
   }
   return units;
 }

@@ -4,12 +4,11 @@ const fetch = require("node-fetch");
 //post menuFilter
 
 module.exports.genMenu = async (event) => {
-  const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
   const userID = data.userID;
   const timestamp = data.timestamp;
   const genFor = data.genFor; // get an array of this of this
-  const genBy = data.genBy;
+  const genBy = data.genBy; //get array of this
   const servingSize = data.servingSize;
   let ingredientNameList = "";
   let menuID_str = "";
@@ -117,14 +116,13 @@ module.exports.genMenu = async (event) => {
   const userTasteRank = await getRanked(taste);
 
   //user's gen data of ..(genby).. --> nutrition per meal
-  const energyAvg = Math.round((total_energy / genFor.length / 3) * 100) / 100;
-  const fatAvg = Math.round((total_fat / genFor.length / 3) * 100) / 100;
-  const carbAvg = Math.round((total_carb / genFor.length / 3) * 100) / 100;
-  const sugarAvg = Math.round((total_sugar / genFor.length / 3) * 100) / 100;
-  const proteinAvg =
-    Math.round((total_protein / genFor.length / 3) * 100) / 100;
-  const sodiumAvg = Math.round((total_sodium / genFor.length / 3) * 100) / 100;
-  const fiberAvg = Math.round((total_fiber / genFor.length / 3) * 100) / 100;
+  const energyAvg = Math.round((total_energy / genFor.length) * 100) / 100;
+  const fatAvg = Math.round((total_fat / genFor.length) * 100) / 100;
+  const carbAvg = Math.round((total_carb / genFor.length) * 100) / 100;
+  const sugarAvg = Math.round((total_sugar / genFor.length) * 100) / 100;
+  const proteinAvg = Math.round((total_protein / genFor.length) * 100) / 100;
+  const sodiumAvg = Math.round((total_sodium / genFor.length) * 100) / 100;
+  const fiberAvg = Math.round((total_fiber / genFor.length) * 100) / 100;
 
   const userIngredient = await getUserIngredient(userID);
 
@@ -132,6 +130,7 @@ module.exports.genMenu = async (event) => {
     ingredientNameList += userIngredient[i].name + ",";
   }
   const possibleMenus = await getPossibleMenu(ingredientNameList);
+
   for (let i = 0; i < possibleMenus.length; i++) {
     menuID_str += possibleMenus[i].id + ",";
   }
@@ -144,13 +143,13 @@ module.exports.genMenu = async (event) => {
 
     for (let j = 0; j < menuInfo.length; j++) {
       if (menuID == menuInfo[j].id) {
-        console.log(menuID);
+        console.log(`${menuID}: ${menuTitle}`);
 
         missedCount = possibleMenus[i].missedIngredientCount;
         usedCount = possibleMenus[i].usedIngredientCount;
         missedIngredients = possibleMenus[i].missedIngredients;
         usedIngredients = possibleMenus[i].usedIngredients;
-        duration = menuInfo[j].preparationMinutes + menuInfo[j].cookingMinutes;
+        duration = menuInfo[j].readyInMinutes;
         missingIngredient = [];
         lackingIngredient = [];
         ingredientData = [];
@@ -311,6 +310,8 @@ module.exports.genMenu = async (event) => {
           sodium: menuSodium * servingSize,
           fiber: menuFiber * servingSize,
         };
+        console.log(`menuEnergy: ${menuEnergy}`);
+        console.log(`energyAvg: ${energyAvg}`);
 
         if (
           menuEnergy <= energyAvg &&
@@ -319,7 +320,8 @@ module.exports.genMenu = async (event) => {
           menuSugar <= sugarAvg &&
           menuProtein <= proteinAvg &&
           menuSodium <= sodiumAvg &&
-          menuFiber <= fiberAvg
+          menuFiber <= fiberAvg &&
+          menuInfo[j].analyzedInstructions.length != 0
         ) {
           let recipe = menuInfo[j].analyzedInstructions[0].steps;
           let recipeStep = [];
@@ -332,7 +334,7 @@ module.exports.genMenu = async (event) => {
             });
           }
           let params = {
-            TableName: tableName,
+            TableName: process.env.DYNAMODB_TABLE,
             Item: {
               PK: `user_${userID}`,
               SK: `gen_${timestamp}_${menuID}`,
@@ -354,30 +356,26 @@ module.exports.genMenu = async (event) => {
           };
           try {
             await dynamodb.put(params).promise();
-            console.log("Success");
+            console.log(`Success: gen_${timestamp}_${menuID}`);
           } catch (err) {
             console.log("Error", err);
+            console.log(params.Item);
           }
-          console.log(
-            `Success: Everything executed correctly for menuID : ${menuID}`
-          );
 
           ///push to database
           genMenuData.push({
+            PK: `user_${userID}`,
+            SK: `gen_${timestamp}_${menuID}`,
             menuID: menuID,
-            miss: missingIngredient,
-            lack: lackingIngredient,
-            score: ingredientScore,
-            cuisineScore: cuisineScore,
-            tasteScore: tasteScore,
-            usedCount: usedCount,
-            missedCount: missedCount,
-            ingredientData: ingredientData,
-            userTasteRank: userTasteRank,
-            menuTasteRank: menuTasteRank,
+            score: ingredientScore + cuisineScore + tasteScore,
             duration: duration,
-            nutrition: nutrition,
-            recipe: recipeStep,
+            energy: nutrition.energy,
+            fat: nutrition.fat,
+            carb: nutrition.carb,
+            sugar: nutrition.sugar,
+            protein: nutrition.protein,
+            sodium: nutrition.sodium,
+            fiber: nutrition.fiber,
           });
         }
       }
@@ -425,7 +423,7 @@ const getUserIngredient = async (userID) => {
 const getPossibleMenu = async (userIngredient) => {
   let ingredientList = userIngredient.slice(0, -1);
   // let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=4631dc8e84774bf39edd76df5679ba38&ingredients=${ingredientList}&ignorePantry=true&ranking=1`;
-  let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=7b9f2b35ba8f4fe697b93357fdc09314&ingredients=${ingredientList}&ignorePantry=true&ranking=1&number=20`;
+  let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8&ingredients=${ingredientList}&ignorePantry=true&ranking=1`;
 
   let res = await fetch(search_url);
   let json = await res.json();
@@ -434,7 +432,7 @@ const getPossibleMenu = async (userIngredient) => {
 
 const getMenuInfo = async (menuIDs) => {
   let menuIDList = menuIDs.slice(0, -1);
-  let search_url = `https://api.spoonacular.com/recipes/informationBulk?apiKey=7b9f2b35ba8f4fe697b93357fdc09314&ids=${menuIDList}&includeNutrition=true`;
+  let search_url = `https://api.spoonacular.com/recipes/informationBulk?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8&ids=${menuIDList}&includeNutrition=true`;
   let res = await fetch(search_url);
   let json = await res.json();
   return json;
@@ -447,16 +445,18 @@ const convertAmount = async (
   userUnit
 ) => {
   let amount = convertedAmount;
+  let roundAmount = 0;
   ///maybe try your own conversion
   let search_url = `https://api.spoonacular.com/recipes/convert?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8&ingredientName=${ingredientName}&sourceAmount=${convertedAmount}&sourceUnit=${unit}&targetUnit=${userUnit}`;
   try {
     let res = await fetch(search_url);
     let json = await res.json();
     amount = json.targetAmount;
+    roundAmount = Math.round(amount * 100) / 100;
   } catch (err) {
     console.log(err);
   }
-  return amount;
+  return roundAmount;
 };
 
 const getUserCuisine = async (userID, profileName) => {
@@ -512,17 +512,17 @@ const getRanked = async (json) => {
   return rank;
 };
 
-const getOptimized = async (menuArr, genBy) => {
-  //   "genBy": {
-  //     "duration": "min",
-  //     "energy": "min",
-  //     "fat": "min",
-  //     "carb": "min",Î
-  //     "sugar": "min",
-  //     "protein": "max",
-  //     "sodium": "min"
-  // },
-};
+// const getOptimized = async (menuArr, genBy) => {
+//   //   "genBy": {
+//   //     "duration": "min",
+//   //     "energy": "min",
+//   //     "fat": "min",
+//   //     "carb": "min",Î
+//   //     "sugar": "min",
+//   //     "protein": "max",
+//   //     "sodium": "min"
+//   // },
+// };
 
 //saetang.nattharika
 //e15593c068d142fa9cf278b7a68e8638
