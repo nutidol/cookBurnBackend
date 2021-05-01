@@ -74,6 +74,7 @@ module.exports.createOrUpdateOthersInfo = async (event) => {
     Item: {
       PK: `user_${userID}`,
       SK: `profile_${profileName}`,
+      name: profileName,
       gender: gender,
       age: age,
       weight: weight,

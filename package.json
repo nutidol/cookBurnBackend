@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "javascript-lp-solver": "^0.4.24",
     "node-fetch": "^2.6.1",
     "uuid": "^8.3.2"
   },

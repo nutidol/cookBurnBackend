@@ -80,3 +80,46 @@ module.exports.getYourIngredients = (event, context, callback) => {
     callback(null, response);
   });
 };
+
+module.exports.getIngredientInfo = async (event) => {
+  const userID = event.pathParameters.id;
+  const ingredientID = event.pathParameters.ingredientID;
+
+  let result = {};
+  let res = {};
+  try {
+    result = await ingredientInfo(userID, ingredientID);
+    res = {
+      name: result.name,
+      quantity: result.quantity,
+      unit: result.unit,
+    };
+  } catch (err) {
+    res = {
+      name: "",
+      quantity: "0",
+      unit: "unit",
+    };
+  }
+
+  return {
+    headers: {
+      "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+      "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+    },
+    statusCode: 200,
+    body: JSON.stringify(res),
+  };
+};
+
+const ingredientInfo = async (userID, ingredientID) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    Key: {
+      PK: `user_${userID}`,
+      SK: `ingredient_${ingredientID}`,
+    },
+  };
+  const result = await dynamodb.get(params).promise();
+  return result.Item;
+};

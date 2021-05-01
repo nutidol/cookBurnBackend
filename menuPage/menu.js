@@ -40,7 +40,7 @@ module.exports.postMenu = async (event) => {
   const tableName = process.env.DYNAMODB_TABLE;
   const data = JSON.parse(event.body);
   const userID = data.userID;
-  const cookedMenu = data.cookedMenu;
+  const cookedMenu = data.cookedMenu[0];
   const menuID = cookedMenu.id;
   const menuTitle = cookedMenu.title;
   const duration = cookedMenu.duration;

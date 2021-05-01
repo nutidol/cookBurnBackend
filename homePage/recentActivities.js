@@ -49,11 +49,12 @@ module.exports.getRecentActivities = async (event) => {
     //sk, menuname, calories,url
     let SK = result_workout.Items[i].SK;
     let name = result_workout.Items[i].title;
+    let modifyName = `Workout for: ${name}`
     let url = result_workout.Items[i].url;
     let energy = result_workout.Items[i].energy;
     activities.push({
       SK: SK,
-      name: name,
+      name: modifyName,
       url: url,
       energy: energy,
     });

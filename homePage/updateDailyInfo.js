@@ -6,7 +6,7 @@ const dynamodb = require("../dynamodb");
 module.exports.getUpdateDailyInfo = async (event) => {
   const userID = event.pathParameters.id;
   //check today timestamp
-  //    const timestamp = event.pathParameters.timestamp;
+  const timestamp = event.pathParameters.timestamp;
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",

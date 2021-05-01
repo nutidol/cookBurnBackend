@@ -10,6 +10,7 @@ module.exports.getWorkout = async (event) => {
   const weight = profile.weight;
 
   let people = result.genFor.length;
+  console.log(people);
   let title = result.title;
   let energy = result.nutrition.energy / people;
   let url = result.url;

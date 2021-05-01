@@ -71,7 +71,7 @@ module.exports.genMenu = async (event) => {
   let url = "";
 
   for (let i = 0; i < genFor.length; i++) {
-    const name = genFor[i].profile;
+    const name = genFor[i];
     const profileInfo = await getProfileInfo(userID, name);
     total_energy += parseInt(profileInfo.energy);
     total_fat += parseInt(profileInfo.fat);
@@ -449,7 +449,7 @@ const getUserIngredient = async (userID) => {
 const getPossibleMenu = async (userIngredient) => {
   let ingredientList = userIngredient.slice(0, -1);
   // let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=4631dc8e84774bf39edd76df5679ba38&ingredients=${ingredientList}&ignorePantry=true&ranking=1`;
-  let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8&ingredients=${ingredientList}&ignorePantry=true&ranking=1`;
+  let search_url = `https://api.spoonacular.com/recipes/findByIngredients?apiKey=7b9f2b35ba8f4fe697b93357fdc09314&ingredients=${ingredientList}&ignorePantry=true&ranking=1`;
 
   let res = await fetch(search_url);
   let json = await res.json();
@@ -458,7 +458,7 @@ const getPossibleMenu = async (userIngredient) => {
 
 const getMenuInfo = async (menuIDs) => {
   let menuIDList = menuIDs.slice(0, -1);
-  let search_url = `https://api.spoonacular.com/recipes/informationBulk?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8&ids=${menuIDList}&includeNutrition=true`;
+  let search_url = `https://api.spoonacular.com/recipes/informationBulk?apiKey=7b9f2b35ba8f4fe697b93357fdc09314&ids=${menuIDList}&includeNutrition=true`;
   let res = await fetch(search_url);
   let json = await res.json();
   return json;
@@ -473,7 +473,7 @@ const convertAmount = async (
   let amount = convertedAmount;
   let roundAmount = 0;
   ///maybe try your own conversion
-  let search_url = `https://api.spoonacular.com/recipes/convert?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8&ingredientName=${ingredientName}&sourceAmount=${convertedAmount}&sourceUnit=${unit}&targetUnit=${userUnit}`;
+  let search_url = `https://api.spoonacular.com/recipes/convert?apiKey=7b9f2b35ba8f4fe697b93357fdc09314&ingredientName=${ingredientName}&sourceAmount=${convertedAmount}&sourceUnit=${unit}&targetUnit=${userUnit}`;
   try {
     let res = await fetch(search_url);
     let json = await res.json();
@@ -510,7 +510,7 @@ const getUserTaste = async (userID, profileName) => {
 };
 
 const getMenuTaste = async (menuID) => {
-  let search_url = `https://api.spoonacular.com/recipes/${menuID}/tasteWidget.json?apiKey=57dea7a7968e4f2fb29c0fe73b479ce8`;
+  let search_url = `https://api.spoonacular.com/recipes/${menuID}/tasteWidget.json?apiKey=7b9f2b35ba8f4fe697b93357fdc09314`;
   let res = await fetch(search_url);
   let json = await res.json();
   return json;
@@ -548,6 +548,7 @@ const getOptimized = async (menuArr, genBy) => {
   const opSodium = genBy.sodium;
   const opFiber = genBy.fiber;
   let menuIDs = [];
+  let DurationMenu = [];
 
   let scoreObj = menuArr.reduce(
     (obj, item) => Object.assign(obj, { [item.SK]: item.score }),
@@ -589,9 +590,11 @@ const getOptimized = async (menuArr, genBy) => {
   if (opDuration == "max") {
     let menu = await checkMax(durationObj);
     menuIDs.push(menu);
+    DurationMenu.push(menu);
   } else if (opDuration == "min") {
     let menu = await checkMin(durationObj);
     menuIDs.push(menu);
+    DurationMenu.push(menu);
   } else {
     let menu = await checkMax(scoreObj);
     menuIDs.push(menu);
@@ -727,10 +730,59 @@ const findUniqueDuplicates = async (arr) => {
 //saetang.nattharika
 //e15593c068d142fa9cf278b7a68e8638
 //nutidol@gmail
-//e6b34e7165a042a49a19811bc0057118
+//7b9f2b35ba8f4fe697b93357fdc09314
 //6031748721
 //4631dc8e84774bf39edd76df5679ba38
 //newnicknat
 //57dea7a7968e4f2fb29c0fe73b479ce8
 //nutidol@hotmail
 //7b9f2b35ba8f4fe697b93357fdc09314
+
+
+
+
+
+
+
+//   let results,
+//     model = {
+//       optimize: "duration",
+//       opType: "min",
+//       constraints: {
+//         energy: { min: 1692 },
+//         sugar: { min: 42 },
+//         fat: { min: 56 },
+//         protein: { max: 55 },
+//         fiber: { max: 23 },
+//         sodium: { min: 1500 },
+//         carb: { min: 250 },
+//       },
+//       variables: {
+//         hi: {
+//           duration: 30,
+//           energy: 200,
+//           sugar: 1,
+//           fat: 7,
+//           protein: 3,
+//           fiber: 3,
+//           sodium: 400,
+//           carb: 100,
+//           hi: 1,
+//         },
+//         ho: {
+//           duration: 50,
+//           energy: 1000,
+//           sugar: 59,
+//           fat: 3,
+//           protein: 3,
+//           fiber: 3,
+//           sodium: 400,
+//           carb: 340,
+//           ho: 1,
+//         },
+//       },
+//       ints: { hi: 1, ho: 1 },
+//     };
+
+//   results = solver.Solve(model);
+//   console.log(results);

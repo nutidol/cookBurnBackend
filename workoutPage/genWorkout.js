@@ -27,7 +27,7 @@ module.exports.genWorkout = async (event) => {
     let people = result.Items[i].genFor.length;
     let url = result.Items[i].url;
     for (let j = 0; j < people; j++) {
-      if (result.Items[i].genFor[j].profile == userName) {
+      if (result.Items[i].genFor[j] == userName) {
         let energy = result.Items[i].nutrition.energy / people;
         let sortKey = result.Items[i].SK;
         resArr.push({

@@ -129,7 +129,7 @@ functions:
     handler: homePage/updateDailyInfo.getUpdateDailyInfo
     events:
       - http:
-          path: homePage/updateDailyInfo/{id}
+          path: homePage/updateDailyInfo/{id}/{timestamp}
           method: get
           cors: true
 
@@ -156,8 +156,13 @@ functions:
           path: homePage/cardInfo
           method: post
           cors: true
-          
-
+  getUser:
+    handler: homePage/username.getUser
+    events:
+      - http:
+          path: homePage/username/{id}
+          method: get
+          cors: true
 # INGREDIENT PAGE
   getSearchIngredient:
     handler: ingredientsPage/searchIngredient.getSearchIngredient
@@ -194,6 +199,15 @@ functions:
           path: ingredientsPage/yourIngredients/{id}
           method: get
           cors: true
+
+  getIngredientInfo:
+    handler: ingredientsPage/yourIngredients.getIngredientInfo
+    events:
+      - http:
+          path: ingredientsPage/IngredientInfo/{id}/{ingredientID}
+          method: get
+          cors: true
+
           
 # MENU PAGE
   getMenuFilterFor:
@@ -210,6 +224,15 @@ functions:
     events:
       - http:
           path: menuPage/menuFilter
+          method: post
+          cors: true
+
+  genMenuUpdate:
+    handler: menuPage/generateMenus.genMenuUpdate
+    timeout: 600
+    events:
+      - http:
+          path: menuPage/generateMenus
           method: post
           cors: true
 
