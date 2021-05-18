@@ -1,4 +1,6 @@
 const dynamodb = require("../dynamodb");
+const fetch = require("node-fetch");
+
 
 //get
 module.exports.getMenu = async (event) => {
@@ -45,8 +47,6 @@ module.exports.postMenu = async (event) => {
   const menuTitle = cookedMenu.title;
   const duration = cookedMenu.duration;
   const score = cookedMenu.score;
-  const missingIngredient = cookedMenu.missingIngredient;
-  const lackingIngredient = cookedMenu.lackingIngredient;
   const totalLackIngredient = cookedMenu.totalLackIngredient;
   const ingredientData = cookedMenu.ingredientData;
   const nutrition = cookedMenu.nutrition;
@@ -58,6 +58,8 @@ module.exports.postMenu = async (event) => {
   const url = cookedMenu.url;
   const workoutstatus = "false";
 
+  await updateUserIngredients(userID, ingredientData);
+
   let params = {
     TableName: tableName,
     Item: {
@@ -67,8 +69,6 @@ module.exports.postMenu = async (event) => {
       title: menuTitle,
       duration: duration,
       score: score,
-      missingIngredient: missingIngredient,
-      lackingIngredient: lackingIngredient,
       totalLackIngredient: totalLackIngredient,
       ingredientData: ingredientData,
       nutrition: nutrition,
@@ -97,4 +97,101 @@ module.exports.postMenu = async (event) => {
     statusCode: 200,
     body: JSON.stringify(params.Item),
   };
+};
+
+const updateUserIngredients = async (userID, ingredientData) => {
+  //update user's ingredient
+  //1. get all user's ingredient
+  //2. if ingredient data.id == user's ingredient.data --> change amount and unit to USER's unit
+  //3. substract from user's ingredient
+  //4. put new ingredient amount to user's ingredient
+  let userUpdateAmount = 0;
+  for (let i = 0; i < ingredientData.length; i++) {
+    let ingredientID = ingredientData[i].id;
+    let ingredientName = ingredientData[i].name;
+    let ingredientAmount = ingredientData[i].amount;
+    let ingredientUnit = ingredientData[i].unit;
+    let userIngredient = await ingredientInfo(userID, ingredientName);
+    if (userIngredient == undefined) {
+      continue;
+    }
+    let userIngredientName = userIngredient.name;
+    let userIngredientQty = userIngredient.quantity;
+    let PK = userIngredient.PK;
+    let SK = userIngredient.SK;
+    let userIngredientID = userIngredient.id;
+    let userIngredientUnit = userIngredient.unit;
+    let userIngredientUrl = userIngredient.url;
+
+    let userUsedConvertedAmount = await convertAmount(
+      ingredientName,
+      ingredientAmount,
+      ingredientUnit,
+      userIngredient.unit
+    );
+    if (userIngredientQty > userUsedConvertedAmount) {
+      userUpdateAmount = userIngredientQty - userUsedConvertedAmount;
+    } else {
+      userUpdateAmount = 0;
+    }
+    //put the updated ingredient to database
+    let params = {
+      TableName: process.env.DYNAMODB_TABLE,
+      Item: {
+        PK: PK,
+        SK: SK,
+        id: userIngredientID,
+        quantity: userUpdateAmount,
+        unit: userIngredientUnit,
+        url: userIngredientUrl,
+        name: userIngredientName,
+      },
+    };
+    try {
+      await dynamodb.put(params).promise();
+      console.log(`Updated: ingredient_${userIngredientName}`);
+    } catch (err) {
+      console.log("Error", err);
+      console.log(params.Item);
+    }
+  }
+};
+
+const ingredientInfo = async (userID, ingredientName) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    Key: {
+      PK: `user_${userID}`,
+      SK: `ingredient_${ingredientName}`,
+    },
+  };
+  let result;
+  let res;
+  try {
+    result = await dynamodb.get(params).promise();
+    res = result.Item;
+  } catch (err) {
+    res = undefined;
+  }
+  return res;
+};
+
+const convertAmount = async (
+  ingredientName,
+  convertedAmount,
+  unit,
+  userUnit
+) => {
+  let amount = convertedAmount;
+  let roundAmount = 0;
+  let search_url = `https://api.spoonacular.com/recipes/convert?apiKey=e6b34e7165a042a49a19811bc0057118&ingredientName=${ingredientName}&sourceAmount=${convertedAmount}&sourceUnit=${unit}&targetUnit=${userUnit}`;
+  try {
+    let res = await fetch(search_url);
+    let json = await res.json();
+    amount = json.targetAmount;
+    roundAmount = Math.round(amount * 100) / 100;
+  } catch (err) {
+    console.log(err);
+  }
+  return roundAmount;
 };
